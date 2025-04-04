@@ -211,15 +211,9 @@ class SiteMail_Admin {
                     <form id="sitemail-custom-test-form" method="post">
                         <table class="form-table">
                             <tr valign="top">
-                                <th scope="row"><?php _e('Email du destinataire', 'sitemail'); ?></th>
+                                <th scope="row"><?php _e('Email qui recevra le test', 'sitemail'); ?></th>
                                 <td>
                                     <input type="email" id="sitemail-test-email" name="sitemail_test_email" value="<?php echo esc_attr(get_option('admin_email')); ?>" class="regular-text" required />
-                                </td>
-                            </tr>
-                            <tr valign="top">
-                                <th scope="row"><?php _e('Sujet de l\'email', 'sitemail'); ?></th>
-                                <td>
-                                    <input type="text" id="sitemail-test-subject" name="sitemail_test_subject" value="<?php echo esc_attr(__('Test email via SiteMail', 'sitemail')); ?>" class="regular-text" required />
                                 </td>
                             </tr>
                         </table>
@@ -235,7 +229,6 @@ class SiteMail_Admin {
                                 e.preventDefault();
                                 
                                 var email = $('#sitemail-test-email').val();
-                                var subject = $('#sitemail-test-subject').val();
                                 
                                 $('#sitemail-send-test').prop('disabled', true);
                                 $('#sitemail-test-spinner').addClass('is-active');
@@ -244,7 +237,7 @@ class SiteMail_Admin {
                                 $.post(ajaxurl, {
                                     action: 'sitemail_send_test_email',
                                     email: email,
-                                    subject: subject,
+                                    subject: "Test email via SiteMail",
                                     nonce: '<?php echo wp_create_nonce('sitemail_test_nonce'); ?>'
                                 }, function(response) {
                                     $('#sitemail-test-result').html(response).show();
