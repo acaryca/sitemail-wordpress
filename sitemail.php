@@ -73,7 +73,17 @@ class SiteMail_Service {
      */
     public function setup_github_updater() {
         if (class_exists('SiteMail_GitHub_Updater')) {
-            new SiteMail_GitHub_Updater(SITEMAIL_PLUGIN_FILE, SITEMAIL_GITHUB_REPO, 'SiteMail');
+            // Enable debug mode if WP_DEBUG is enabled
+            $debug = defined('WP_DEBUG') && WP_DEBUG;
+            
+            // Initialize the updater with debug enabled
+            new SiteMail_GitHub_Updater(
+                SITEMAIL_PLUGIN_FILE, 
+                SITEMAIL_GITHUB_REPO, 
+                'SiteMail', 
+                '', // No access token 
+                $debug
+            );
             
             // Add update check button in plugin row
             add_filter('plugin_row_meta', [$this, 'add_plugin_meta_links'], 10, 2);
@@ -663,9 +673,35 @@ function sitemail_handle_update_check() {
         isset($_GET['plugin']) && $_GET['plugin'] === plugin_basename(SITEMAIL_PLUGIN_FILE) &&
         check_admin_referer('sitemail-check-update')
     ) {
+        global $sitemail_service;
+        
+        // Initialize a temporary updater instance
+        if (class_exists('SiteMail_GitHub_Updater')) {
+            $debug = defined('WP_DEBUG') && WP_DEBUG;
+            $updater = new SiteMail_GitHub_Updater(
+                SITEMAIL_PLUGIN_FILE, 
+                SITEMAIL_GITHUB_REPO, 
+                'SiteMail', 
+                '', 
+                $debug
+            );
+            
+            // Clear the updater cache
+            $updater->clear_cache();
+            
+            // Add a success message
+            add_settings_error(
+                'sitemail_update_check',
+                'sitemail_update_check_success',
+                __('Vérification des mises à jour SiteMail déclenchée avec succès.', 'sitemail'),
+                'updated'
+            );
+            set_transient('settings_errors', get_settings_errors(), 30);
+        }
+        
         // Force WordPress to check for updates
         delete_site_transient('update_plugins');
-        wp_redirect(admin_url('plugins.php?plugin_status=all'));
+        wp_redirect(admin_url('plugins.php?plugin_status=all&settings-updated=true'));
         exit;
     }
 }
