@@ -18,7 +18,7 @@ class SiteMail_Admin {
      * Initialize the admin functionality
      */
     public function __construct() {
-        // Add admin menus
+        // Add admin menus via admin_menu action
         add_action('admin_menu', [$this, 'add_admin_menu']);
         
         // Add a link to the settings in the plugins list
@@ -35,6 +35,36 @@ class SiteMail_Admin {
         
         // Setup test routes
         $this->setup_test_routes();
+        
+        // Ajouter un hook de débogage pour vérifier que le menu est bien ajouté
+        add_action('admin_notices', [$this, 'debug_admin_menu']);
+    }
+    
+    /**
+     * Function de débogage pour vérifier l'état du menu admin
+     */
+    public function debug_admin_menu() {
+        global $submenu;
+        
+        // Uniquement pour les administrateurs et si le débogage est activé
+        if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
+            // Vérifier si notre page d'options existe dans le menu
+            $settings_menu_found = false;
+            if (isset($submenu['options-general.php'])) {
+                foreach ($submenu['options-general.php'] as $item) {
+                    if (isset($item[2]) && $item[2] === 'sitemail-settings') {
+                        $settings_menu_found = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!$settings_menu_found && isset($_GET['page']) && $_GET['page'] === 'sitemail-settings') {
+                echo '<div class="notice notice-warning"><p>';
+                _e('Avertissement de débogage: Le menu de paramètres SiteMail n\'a pas été trouvé dans le menu d\'administration.', 'sitemail');
+                echo '</p></div>';
+            }
+        }
     }
     
     /**
@@ -126,6 +156,10 @@ class SiteMail_Admin {
      * Display the plugin settings page
      */
     public function render_settings_page() {
+        // Vérification des autorisations
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Désolé, vous n\'avez pas l\'autorisation d\'accéder à cette page.', 'sitemail'));
+        }
         ?>
         <div class="sitemail__container">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
@@ -259,17 +293,20 @@ class SiteMail_Admin {
      */
     private function setup_test_routes() {
         if (is_admin()) {
-            if (isset($_GET['sitemail_test']) && $_GET['sitemail_test'] === '1') {
-                add_action('admin_init', [$this, 'test_email']);
-            }
-            
-            if (isset($_GET['sitemail_test_api']) && $_GET['sitemail_test_api'] === '1') {
-                add_action('admin_init', [$this, 'test_api_connection']);
-            }
-            
-            if (isset($_GET['sitemail_direct_api']) && $_GET['sitemail_direct_api'] === '1') {
-                add_action('admin_init', [$this, 'test_direct_api']);
-            }
+            // Ajouter les hooks pour les tests via URL
+            add_action('admin_init', function() {
+                if (isset($_GET['sitemail_test']) && $_GET['sitemail_test'] === '1') {
+                    $this->test_email();
+                }
+                
+                if (isset($_GET['sitemail_test_api']) && $_GET['sitemail_test_api'] === '1') {
+                    $this->test_api_connection();
+                }
+                
+                if (isset($_GET['sitemail_direct_api']) && $_GET['sitemail_direct_api'] === '1') {
+                    $this->test_direct_api();
+                }
+            });
             
             // Add AJAX endpoint for custom test email
             add_action('wp_ajax_sitemail_send_test_email', [$this, 'ajax_test_email']);
@@ -657,4 +694,5 @@ function sitemail_admin_init() {
     global $sitemail_admin;
     $sitemail_admin = new SiteMail_Admin();
 }
-add_action('admin_init', 'sitemail_admin_init'); 
+// Initialiser l'admin plus tôt pour s'assurer que les menus sont ajoutés correctement
+add_action('plugins_loaded', 'sitemail_admin_init'); 
