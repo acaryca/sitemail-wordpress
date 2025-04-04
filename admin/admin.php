@@ -167,17 +167,13 @@ class SiteMail_Admin {
                 <?php _e('Cette page vous permet de configurer l\'envoi d\'emails depuis votre site via SiteMail.', 'sitemail'); ?>
             </p>
             
-            <div class="sitemail__notice sitemail__notice--info">
-                <p><?php _e('SiteMail est un service d\'envoi d\'emails fiable qui garantit une meilleure délivrabilité de vos emails.', 'sitemail'); ?></p>
-            </div>
-            
             <form method="post" action="options.php" class="sitemail__block">
                 <?php
                 settings_fields('sitemail_settings');
                 do_settings_sections('sitemail_settings');
                 ?>
                 <div class="sitemail__block-header">
-                    <h3><?php _e('Configuration SiteMail', 'sitemail'); ?></h3>
+                    <h3><?php _e('Configuration', 'sitemail'); ?></h3>
                 </div>
                 <div class="sitemail__block-content">
                     <table class="form-table">
@@ -185,7 +181,7 @@ class SiteMail_Admin {
                             <th scope="row"><?php _e('Clé API SiteMail', 'sitemail'); ?></th>
                             <td>
                                 <input type="text" name="sitemail_api_key" value="<?php echo esc_attr(get_option('sitemail_api_key')); ?>" class="regular-text" />
-                                <p class="description"><?php _e('Entrez votre clé API SiteMail. Vous pouvez également définir la clé dans wp-config.php avec <code>define(\'SITEMAIL_API_KEY\', \'votre-clé-api\');</code>', 'sitemail'); ?></p>
+                                <p class="description"><?php _e('Entrez votre clé API SiteMail.', 'sitemail'); ?></p>
                             </td>
                         </tr>
                         <tr valign="top">
@@ -277,7 +273,7 @@ class SiteMail_Admin {
                 </div>
                 <div class="sitemail__block-content">
                     <p>
-                        <?php _e('SiteMail est un service d\'envoi d\'emails pour les sites WordPress. Ce plugin vous permet de connecter votre site à SiteMail pour bénéficier d\'un envoi d\'emails fiable.', 'sitemail'); ?>
+                        <?php _e('SiteMail est un service d\'envoi d\'emails créé par ACARY. Ce plugin vous permet de connecter votre site à SiteMail pour bénéficier d\'un envoi d\'emails fiable.', 'sitemail'); ?>
                     </p>
                     <p>
                         <?php _e('Pour plus d\'informations, visitez <a href="https://sitemail.ca" target="_blank">sitemail.ca</a>.', 'sitemail'); ?>
