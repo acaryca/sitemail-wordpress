@@ -14,3 +14,10 @@ Replace WordPress email function with SiteMail API
 2. Enter your SiteMail API key.
 3. Save the settings.
 
+## Contributing
+
+Feel free to contribute to this project! Don't worry about following strict guidelines or templates. Simply submit your changes and we'll review them. Whether it's a bug fix, feature addition, or documentation improvement, all contributions are welcome.
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE.txt](LICENSE.txt) file for details.
