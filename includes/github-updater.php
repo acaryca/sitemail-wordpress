@@ -52,6 +52,9 @@ class SiteMail_GitHub_Updater {
         add_filter('plugins_api', array($this->plugin_info, 'plugin_popup'), 10, 3);
         add_filter('upgrader_post_install', array($this, 'after_install'), 10, 3);
         
+        // Add filter to handle GitHub downloads
+        add_filter('upgrader_pre_download', array($this, 'upgrader_pre_download'), 10, 4);
+        
         // Add action to display messages
         add_action('admin_notices', array('SiteMail_GitHub_Updater_Messages', 'display_messages'));
         
@@ -87,17 +90,20 @@ class SiteMail_GitHub_Updater {
         $this->log_debug('Fetching repository info from GitHub');
         $request_uri = $this->github_url . $this->github_repo . '/releases/latest';
         
-        if ($this->authorize_token) {
-            $request_uri = add_query_arg('access_token', $this->authorize_token, $request_uri);
-            $this->log_debug('Using GitHub API with authorization token');
-        }
-
-        // Add request args for better reliability
+        // Setup request arguments
         $request_args = array(
             'timeout' => 10,     // Increase timeout to 10 seconds
             'sslverify' => true, // Verify SSL
             'user-agent' => 'WordPress/' . get_bloginfo('version') . '; ' . get_bloginfo('url'),
         );
+        
+        // Add authorization header if token is provided
+        if ($this->authorize_token) {
+            $request_args['headers'] = array(
+                'Authorization' => 'token ' . $this->authorize_token
+            );
+            $this->log_debug('Using GitHub API with authorization token');
+        }
         
         $this->log_debug('Making request to: ' . $request_uri);
         $response = wp_remote_get($request_uri, $request_args);
@@ -146,9 +152,21 @@ class SiteMail_GitHub_Updater {
 
         if (is_array($response_data) && !empty($response_data)) {
             $this->log_debug('Successfully retrieved repository info');
+            
+            // Ensure zipball_url is properly formatted
+            if (isset($response_data['zipball_url'])) {
+                // For GitHub API, we need to use the download URL format
+                $direct_download_url = 'https://github.com/' . $this->github_repo . '/archive/' . 
+                                      (isset($response_data['tag_name']) ? $response_data['tag_name'] : 'master') . '.zip';
+                $response_data['download_url'] = $direct_download_url;
+                
+                $this->log_debug('Using direct download URL: ' . $direct_download_url);
+            }
+            
             if (isset($response_data['tag_name'])) {
                 $this->log_debug('Latest version: ' . $response_data['tag_name']);
             }
+            
             $this->github_response = $response_data;
             return $response_data;
         }
@@ -195,12 +213,17 @@ class SiteMail_GitHub_Updater {
                 'info'
             );
             
+            // Set up the response for WordPress update system
             $response = new stdClass();
-            $response->slug = $this->basename;
-            $response->plugin = $this->basename;
+            
+            // Critical: Set both slug values
+            // Some parts of WP use plugin slug (directory), others use full path
+            $response->slug = dirname($this->basename);     // Just the directory
+            $response->plugin = $this->basename;            // Full path with filename
+            
+            // Basic information
             $response->new_version = $this->get_version_from_tag($remote['tag_name']);
             $response->url = $this->plugin['PluginURI'] ?: 'https://github.com/' . $this->github_repo;
-            $response->package = $remote['zipball_url'];
             $response->tested = isset($remote['tested']) ? $remote['tested'] : get_bloginfo('version');
             $response->requires = isset($remote['requires']) ? $remote['requires'] : '5.0';
             $response->requires_php = isset($remote['requires_php']) ? $remote['requires_php'] : '7.0';
@@ -208,8 +231,48 @@ class SiteMail_GitHub_Updater {
             // Important: Add this to enable the "View details" button
             $response->id = $this->github_repo;
             
+            // Use the direct download URL preferentially (important for GitHub API)
+            if (isset($remote['download_url'])) {
+                $download_url = $remote['download_url'];
+                $this->log_debug('Using direct download URL from GitHub: ' . $download_url);
+            } else {
+                $download_url = isset($remote['zipball_url']) ? $remote['zipball_url'] : '';
+                $this->log_debug('Using zipball URL from GitHub API: ' . $download_url);
+            }
+            
+            // For GitHub API authenticated requests
+            if ($this->authorize_token && !empty($download_url) && strpos($download_url, 'api.github.com') !== false) {
+                $request_args = array(
+                    'headers' => array(
+                        'Authorization' => 'token ' . $this->authorize_token
+                    )
+                );
+                $this->log_debug('Adding authorization token to download URL');
+            }
+            
+            // Set the package URL for downloading the update
+            $response->package = $download_url;
+            
+            // Add more details for the WordPress updater interface
+            $response->sections = [
+                'description' => $this->plugin['Description'],
+                'changelog' => isset($remote['body']) ? $remote['body'] : __('See GitHub repository for changelog', 'sitemail')
+            ];
+            
+            // Set icons if available
+            $response->icons = [
+                '1x' => 'https://raw.githubusercontent.com/' . $this->github_repo . '/main/assets/icon-128x128.png',
+                '2x' => 'https://raw.githubusercontent.com/' . $this->github_repo . '/main/assets/icon-256x256.png'
+            ];
+            
+            // Add the update information to the transient
             $transient->response[$this->basename] = $response;
             $this->log_debug('Added update information to transient');
+            
+            // Log the complete update object for debugging
+            if ($this->debug) {
+                $this->log_debug('Update object: ' . print_r($response, true));
+            }
         } else {
             $this->log_debug('No update available');
             
@@ -269,11 +332,46 @@ class SiteMail_GitHub_Updater {
     public function after_install($response, $hook_extra, $result) {
         global $wp_filesystem;
 
-        $install_directory = plugin_dir_path($this->file);
-        $wp_filesystem->move($result['destination'], $install_directory);
-        $result['destination'] = $install_directory;
+        // Ensure WordPress filesystem is initialized
+        if (!$wp_filesystem) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+            WP_Filesystem();
+        }
 
+        $this->log_debug('Running after_install cleanup');
+        
+        // Make sure we have the correct target plugin directory
+        $plugin_folder = WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . dirname($this->basename);
+        $wp_filesystem->delete($plugin_folder, true);
+        
+        // GitHub places the plugin in a subfolder with the repository name and commit/tag hash
+        // We need to find that folder and move content from there
+        $repo_name = explode('/', $this->github_repo);
+        $repo_name = end($repo_name); // Get the repository name part
+        
+        // Build a pattern to match the GitHub-created directory
+        $pattern = $result['destination'] . DIRECTORY_SEPARATOR . $repo_name . '-*';
+        $matches = glob($pattern);
+        
+        if (!empty($matches) && is_array($matches)) {
+            $source_dir = $matches[0]; // The first match should be our directory
+            $this->log_debug('Found GitHub directory: ' . $source_dir);
+            
+            // Move from the GitHub directory to the correct plugin directory
+            if (is_dir($source_dir)) {
+                $this->log_debug('Moving from ' . $source_dir . ' to ' . $plugin_folder);
+                $wp_filesystem->move($source_dir, $plugin_folder);
+            }
+        } else {
+            $this->log_debug('No GitHub directory found matching pattern: ' . $pattern);
+        }
+        
+        // Set the destination to the plugin folder to ensure WordPress knows where it is
+        $result['destination'] = $plugin_folder;
+
+        // Activate the plugin if it was active before the update
         if ($this->active) {
+            $this->log_debug('Reactivating plugin after update');
             activate_plugin($this->basename);
         }
 
@@ -299,6 +397,9 @@ class SiteMail_GitHub_Updater {
     public function force_update_check() {
         $this->log_debug('Force checking for updates');
         
+        // First test the update functionality
+        $this->test_update_functionality();
+        
         // Clear all transients related to updates
         delete_site_transient('update_plugins');
         
@@ -321,12 +422,18 @@ class SiteMail_GitHub_Updater {
         $has_update = version_compare($current_version, $remote_version, '<');
         
         if ($has_update) {
+            $download_url = isset($remote['download_url']) ? $remote['download_url'] : 
+                           (isset($remote['zipball_url']) ? $remote['zipball_url'] : '');
+                           
+            $this->log_debug('Download URL: ' . $download_url);
+            
             $this->messages->add_message(
                 sprintf(
-                    __('Mise à jour disponible pour %s: version %s. Votre version actuelle est %s.', 'sitemail'),
+                    __('Mise à jour disponible pour %s: version %s. Votre version actuelle est %s. <a href="%s">Mettre à jour maintenant</a>', 'sitemail'),
                     $this->plugin_name,
                     $remote_version,
-                    $current_version
+                    $current_version,
+                    admin_url('update-core.php')
                 ),
                 'info'
             );
@@ -401,6 +508,141 @@ class SiteMail_GitHub_Updater {
                 __('Connexion à GitHub réussie pour le dépôt %s.', 'sitemail'),
                 $this->github_repo
             ),
+            'success'
+        );
+        
+        return true;
+    }
+
+    /**
+     * Process the download URL before WordPress upgrader downloads the package
+     * This is needed because GitHub API URLs may need special handling
+     *
+     * @param bool|WP_Error $reply Whether to bail without returning the package. Default false.
+     * @param string $package The package file name or URL.
+     * @param WP_Upgrader $upgrader The WP_Upgrader instance.
+     * @param array $hook_extra Extra arguments passed to hooked filters.
+     * @return bool|WP_Error
+     */
+    public function upgrader_pre_download($reply, $package, $upgrader, $hook_extra) {
+        // Check if this is our plugin
+        if (isset($hook_extra['plugin']) && $hook_extra['plugin'] === $this->basename) {
+            $this->log_debug('Pre-download hook triggered for ' . $this->basename);
+            $this->log_debug('Package URL: ' . $package);
+            
+            // If the URL matches our GitHub repository, ensure it has the right parameters
+            if (strpos($package, 'github.com/' . $this->github_repo) !== false) {
+                $this->log_debug('GitHub package URL detected. Processing...');
+                
+                // No additional processing needed for now, just log that we're handling it
+                // This hook allows us to intercept if needed in the future
+            }
+        }
+        
+        // Return the original reply (false) to allow the download to proceed
+        return $reply;
+    }
+
+    /**
+     * Test the download URL to make sure it's accessible
+     * 
+     * @param string $url The download URL to test
+     * @return bool Whether the URL is accessible
+     */
+    private function test_download_url($url) {
+        $this->log_debug('Testing download URL: ' . $url);
+        
+        // We'll just check the headers to see if the file exists
+        $request_args = array(
+            'method' => 'HEAD',
+            'timeout' => 5,
+            'sslverify' => true,
+            'user-agent' => 'WordPress/' . get_bloginfo('version') . '; ' . get_bloginfo('url'),
+        );
+        
+        // Add authorization if needed
+        if ($this->authorize_token && strpos($url, 'api.github.com') !== false) {
+            $request_args['headers'] = array(
+                'Authorization' => 'token ' . $this->authorize_token
+            );
+        }
+        
+        $response = wp_remote_head($url, $request_args);
+        
+        if (is_wp_error($response)) {
+            $error_message = $response->get_error_message();
+            $this->log_debug('Download URL test failed: ' . $error_message);
+            return false;
+        }
+        
+        $response_code = wp_remote_retrieve_response_code($response);
+        
+        if ($response_code >= 200 && $response_code < 300) {
+            $this->log_debug('Download URL test successful. Response code: ' . $response_code);
+            return true;
+        }
+        
+        $this->log_debug('Download URL test failed. Response code: ' . $response_code);
+        return false;
+    }
+    
+    /**
+     * Test the update functionality
+     * 
+     * @return bool Whether the update functionality is working
+     */
+    public function test_update_functionality() {
+        $this->log_debug('Testing update functionality');
+        
+        // First test GitHub connection
+        if (!$this->test_connection()) {
+            $this->log_debug('GitHub connection test failed');
+            return false;
+        }
+        
+        // Fetch repository info
+        $remote = $this->get_repository_info();
+        
+        if (!$remote) {
+            $this->log_debug('Failed to get repository info');
+            $this->messages->add_message(
+                __('Impossible de récupérer les informations du dépôt GitHub.', 'sitemail'),
+                'error'
+            );
+            return false;
+        }
+        
+        // Get download URL
+        $download_url = '';
+        if (isset($remote['download_url'])) {
+            $download_url = $remote['download_url'];
+        } elseif (isset($remote['zipball_url'])) {
+            $download_url = $remote['zipball_url'];
+        }
+        
+        if (empty($download_url)) {
+            $this->log_debug('No download URL found in repository info');
+            $this->messages->add_message(
+                __('URL de téléchargement non trouvée dans les informations du dépôt.', 'sitemail'),
+                'error'
+            );
+            return false;
+        }
+        
+        // Test download URL
+        if (!$this->test_download_url($download_url)) {
+            $this->messages->add_message(
+                sprintf(
+                    __('URL de téléchargement inaccessible: %s', 'sitemail'),
+                    $download_url
+                ),
+                'error'
+            );
+            return false;
+        }
+        
+        $this->messages->add_message(
+            __('Tous les tests de fonctionnalité de mise à jour ont réussi!', 'sitemail'),
             'success'
         );
         

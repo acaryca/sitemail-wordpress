@@ -218,6 +218,35 @@ class SiteMail_Service {
                     <a href="<?php echo esc_url(add_query_arg(['sitemail_test_api' => '1'])); ?>" class="button"><?php _e('Tester la connexion API', 'sitemail'); ?></a>
                     <a href="<?php echo esc_url(add_query_arg(['sitemail_direct_api' => '1'])); ?>" class="button"><?php _e('Test direct API', 'sitemail'); ?></a>
                 </p>
+                
+                <hr>
+                <h2><?php _e('Mises à jour du plugin', 'sitemail'); ?></h2>
+                <p><?php _e('SiteMail peut être mis à jour automatiquement depuis GitHub.', 'sitemail'); ?></p>
+                <p>
+                    <?php 
+                    $check_update_url = wp_nonce_url(
+                        add_query_arg(
+                            [
+                                'action' => 'sitemail_check_update',
+                                'plugin' => plugin_basename(SITEMAIL_PLUGIN_FILE)
+                            ],
+                            admin_url('plugins.php')
+                        ),
+                        'sitemail-check-update'
+                    );
+                    ?>
+                    <a href="<?php echo esc_url($check_update_url); ?>" class="button button-primary"><?php _e('Vérifier les mises à jour', 'sitemail'); ?></a>
+                    <a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="button"><?php _e('Voir toutes les mises à jour', 'sitemail'); ?></a>
+                </p>
+                <p class="description">
+                    <?php printf(
+                        __('Version actuelle: %s | Dépôt GitHub: <a href="%s" target="_blank">%s</a>', 'sitemail'),
+                        esc_html(get_plugin_data(SITEMAIL_PLUGIN_FILE)['Version']),
+                        esc_url('https://github.com/' . SITEMAIL_GITHUB_REPO),
+                        esc_html(SITEMAIL_GITHUB_REPO)
+                    ); ?>
+                </p>
+                
                 <?php submit_button(); ?>
             </form>
         </div>
@@ -681,7 +710,7 @@ function sitemail_show_stored_messages() {
 }
 
 /**
- * Handle update check action
+ * Handle update check requests
  */
 function sitemail_handle_update_check() {
     if (
@@ -702,11 +731,11 @@ function sitemail_handle_update_check() {
                 $debug
             );
             
-            // First test GitHub connection
-            if ($updater->test_connection()) {
-                // If connection is successful, force update check
-                $updater->force_update_check();
-            }
+            // First test update functionality - includes connectivity test
+            $updater->test_update_functionality();
+            
+            // If connection is successful, force update check
+            $updater->force_update_check();
         }
         
         // Redirect to the plugins page
@@ -720,8 +749,8 @@ add_action('admin_init', 'sitemail_handle_update_check');
  * Display update messages on the plugins page
  */
 function sitemail_display_update_messages() {
-    if (class_exists('SiteMail_GitHub_Updater')) {
-        SiteMail_GitHub_Updater::display_update_messages();
+    if (class_exists('SiteMail_GitHub_Updater_Messages')) {
+        SiteMail_GitHub_Updater_Messages::display_messages();
     }
 }
 add_action('admin_notices', 'sitemail_display_update_messages');
