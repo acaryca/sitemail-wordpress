@@ -21,6 +21,7 @@ class SiteMail_GitHub_Updater {
     private $authorize_token;
     private $github_url = 'https://api.github.com/repos/';
     private $debug = false;
+    private $update_messages = array();
 
     /**
      * Constructor
@@ -91,8 +92,19 @@ class SiteMail_GitHub_Updater {
         
         // Check for errors
         if (is_wp_error($response)) {
-            $this->log_debug('GitHub API request error: ' . $response->get_error_message());
-            error_log('SiteMail GitHub Updater Error: ' . $response->get_error_message());
+            $error_message = $response->get_error_message();
+            $this->log_debug('GitHub API request error: ' . $error_message);
+            error_log('SiteMail GitHub Updater Error: ' . $error_message);
+            
+            // Add error message for the user
+            $this->add_update_message(
+                sprintf(
+                    __('Erreur lors de la connexion à GitHub: %s', 'sitemail'),
+                    $error_message
+                ),
+                'error'
+            );
+            
             return false;
         }
         
@@ -101,7 +113,19 @@ class SiteMail_GitHub_Updater {
         $this->log_debug('GitHub API response code: ' . $response_code);
         
         if ($response_code !== 200) {
-            error_log('SiteMail GitHub Updater Error: Unexpected response code ' . $response_code);
+            $error_message = 'Unexpected response code ' . $response_code;
+            error_log('SiteMail GitHub Updater Error: ' . $error_message);
+            
+            // Add error message for the user
+            $this->add_update_message(
+                sprintf(
+                    __('Erreur lors de la récupération des mises à jour: Code %s. Vérifiez que le dépôt GitHub %s existe et est accessible.', 'sitemail'),
+                    $response_code,
+                    $this->github_repo
+                ),
+                'error'
+            );
+            
             return false;
         }
         
@@ -119,6 +143,13 @@ class SiteMail_GitHub_Updater {
         
         $this->log_debug('Invalid response from GitHub');
         error_log('SiteMail GitHub Updater Error: Invalid response from GitHub');
+        
+        // Add error message for the user
+        $this->add_update_message(
+            __('Réponse invalide reçue de GitHub. Impossible de vérifier les mises à jour.', 'sitemail'),
+            'error'
+        );
+        
         return false;
     }
 
@@ -141,6 +172,17 @@ class SiteMail_GitHub_Updater {
         if ($remote && version_compare($this->plugin['Version'], $this->get_version_from_tag($remote['tag_name']), '<')) {
             $this->log_debug('New version ' . $this->get_version_from_tag($remote['tag_name']) . ' available. Current: ' . $this->plugin['Version']);
             
+            // Add message about new version
+            $this->add_update_message(
+                sprintf(
+                    __('Nouvelle version %s disponible pour %s! Version actuelle: %s', 'sitemail'),
+                    $this->get_version_from_tag($remote['tag_name']),
+                    $this->plugin_name,
+                    $this->plugin['Version']
+                ),
+                'info'
+            );
+            
             $response = new stdClass();
             $response->slug = $this->basename;
             $response->plugin = $this->basename;
@@ -158,10 +200,28 @@ class SiteMail_GitHub_Updater {
                 'low' => 'https://raw.githubusercontent.com/' . $this->github_repo . '/main/assets/banner-772x250.jpg',
                 'high' => 'https://raw.githubusercontent.com/' . $this->github_repo . '/main/assets/banner-1544x500.jpg'
             ];
+            
+            // Important: Add this to enable the "View details" button
+            if (!isset($response->id)) {
+                $response->id = $this->github_repo;
+            }
+            
             $transient->response[$this->basename] = $response;
             $this->log_debug('Added update information to transient');
         } else {
             $this->log_debug('No update available');
+            
+            // Check if this was triggered manually by the user
+            if (isset($_GET['action']) && $_GET['action'] === 'sitemail_check_update') {
+                $this->add_update_message(
+                    sprintf(
+                        __('Le plugin %s est à jour (version %s)', 'sitemail'),
+                        $this->plugin_name,
+                        $this->plugin['Version']
+                    ),
+                    'success'
+                );
+            }
         }
 
         return $transient;
@@ -186,7 +246,51 @@ class SiteMail_GitHub_Updater {
         $this->log_debug('Clearing GitHub response cache');
         $this->github_response = null;
         delete_site_transient('update_plugins');
+        
+        // Add a message for the user
+        $this->add_update_message(
+            __('Vérification des mises à jour déclenchée avec succès.', 'sitemail'),
+            'success'
+        );
+        
         return true;
+    }
+
+    /**
+     * Add update message
+     * 
+     * @param string $message Message text
+     * @param string $type Message type (success, error, warning)
+     */
+    public function add_update_message($message, $type = 'success') {
+        $this->update_messages[] = array(
+            'message' => $message,
+            'type' => $type
+        );
+        
+        // Store messages as transient
+        set_transient('sitemail_update_messages', $this->update_messages, 30);
+    }
+    
+    /**
+     * Display stored update messages
+     */
+    public static function display_update_messages() {
+        $messages = get_transient('sitemail_update_messages');
+        
+        if (!empty($messages) && is_array($messages)) {
+            foreach ($messages as $message) {
+                $class = 'notice notice-' . esc_attr($message['type']);
+                printf(
+                    '<div class="%1$s"><p>%2$s</p></div>',
+                    $class,
+                    esc_html($message['message'])
+                );
+            }
+            
+            // Clean up the transient
+            delete_transient('sitemail_update_messages');
+        }
     }
 
     /**
@@ -202,8 +306,9 @@ class SiteMail_GitHub_Updater {
             return $result;
         }
 
-        if (!empty($args->slug) && $args->slug === $this->basename) {
-            $this->log_debug('Generating plugin information popup');
+        // Check if this is our plugin
+        if (!empty($args->slug) && ($args->slug === $this->basename || $args->slug === dirname($this->basename))) {
+            $this->log_debug('Generating plugin information popup for: ' . $args->slug);
             $this->initialize();
             $remote = $this->get_repository_info();
 
@@ -221,6 +326,8 @@ class SiteMail_GitHub_Updater {
                 $plugin->downloaded = 0;
                 $plugin->last_updated = isset($remote['published_at']) ? date('Y-m-d', strtotime($remote['published_at'])) : '';
                 $plugin->homepage = $this->plugin['PluginURI'] ?: 'https://github.com/' . $this->github_repo;
+                
+                // Sections information
                 $plugin->sections = [
                     'description' => $this->plugin['Description'],
                     'installation' => __('Install this plugin like you would install any other WordPress plugin.', 'sitemail'),
@@ -231,18 +338,34 @@ class SiteMail_GitHub_Updater {
                     )
                 ];
                 $plugin->download_link = $remote['zipball_url'];
+                
+                // Icons are important for the modal display
                 $plugin->icons = [
                     '1x' => 'https://raw.githubusercontent.com/' . $this->github_repo . '/main/assets/icon-128x128.png',
                     '2x' => 'https://raw.githubusercontent.com/' . $this->github_repo . '/main/assets/icon-256x256.png'
                 ];
+                
+                // Banners for the modal header
                 $plugin->banners = [
                     'low' => 'https://raw.githubusercontent.com/' . $this->github_repo . '/main/assets/banner-772x250.jpg',
                     'high' => 'https://raw.githubusercontent.com/' . $this->github_repo . '/main/assets/banner-1544x500.jpg'
                 ];
                 
+                // Add id property to ensure compatibility with WordPress
+                $plugin->id = $this->github_repo;
+                
+                // Add important WordPress.org info that might be expected
+                $plugin->rating = 100; // Default to 100% rating since it's our own plugin
+                $plugin->num_ratings = 0;
+                $plugin->active_installs = 0;
+                
                 return $plugin;
             } else {
                 $this->log_debug('Failed to get plugin information from GitHub');
+                $this->add_update_message(
+                    __('Impossible de récupérer les informations détaillées du plugin depuis GitHub.', 'sitemail'),
+                    'error'
+                );
             }
         }
 
@@ -343,5 +466,121 @@ class SiteMail_GitHub_Updater {
         if ($this->debug) {
             error_log('SiteMail GitHub Updater: ' . $message);
         }
+    }
+
+    /**
+     * Force update check
+     * 
+     * @return bool Whether the update check was successful
+     */
+    public function force_update_check() {
+        $this->log_debug('Force checking for updates');
+        
+        // Clear all transients related to updates
+        delete_site_transient('update_plugins');
+        
+        // Clear internal cache
+        $this->github_response = null;
+        
+        // Refetch repository info
+        $remote = $this->get_repository_info();
+        
+        if (!$remote) {
+            $this->log_debug('Failed to get repository info during forced update check');
+            return false;
+        }
+        
+        // Check version
+        $this->initialize();
+        $current_version = $this->plugin['Version'];
+        $remote_version = $this->get_version_from_tag($remote['tag_name']);
+        
+        $has_update = version_compare($current_version, $remote_version, '<');
+        
+        if ($has_update) {
+            $this->add_update_message(
+                sprintf(
+                    __('Mise à jour disponible pour %s: version %s. Votre version actuelle est %s.', 'sitemail'),
+                    $this->plugin_name,
+                    $remote_version,
+                    $current_version
+                ),
+                'info'
+            );
+        } else {
+            $this->add_update_message(
+                sprintf(
+                    __('Vous utilisez la dernière version de %s (%s).', 'sitemail'),
+                    $this->plugin_name,
+                    $current_version
+                ),
+                'success'
+            );
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Test GitHub connection
+     * 
+     * @return bool Whether the connection is working
+     */
+    public function test_connection() {
+        $this->log_debug('Testing GitHub API connection');
+        
+        // Build a test request to the repository
+        $request_uri = $this->github_url . $this->github_repo;
+        
+        $request_args = array(
+            'timeout' => 5,
+            'sslverify' => true,
+            'user-agent' => 'WordPress/' . get_bloginfo('version') . '; ' . get_bloginfo('url'),
+        );
+        
+        $response = wp_remote_get($request_uri, $request_args);
+        
+        if (is_wp_error($response)) {
+            $error_message = $response->get_error_message();
+            $this->log_debug('GitHub connection test failed: ' . $error_message);
+            
+            $this->add_update_message(
+                sprintf(
+                    __('Échec de la connexion à GitHub: %s', 'sitemail'),
+                    $error_message
+                ),
+                'error'
+            );
+            
+            return false;
+        }
+        
+        $response_code = wp_remote_retrieve_response_code($response);
+        
+        if ($response_code !== 200) {
+            $this->log_debug('GitHub connection test received unexpected response code: ' . $response_code);
+            
+            $this->add_update_message(
+                sprintf(
+                    __('Connexion à GitHub établie mais avec une réponse inattendue (code %s). Vérifiez que le dépôt %s existe.', 'sitemail'),
+                    $response_code,
+                    $this->github_repo
+                ),
+                'warning'
+            );
+            
+            return false;
+        }
+        
+        $this->log_debug('GitHub connection test successful');
+        $this->add_update_message(
+            sprintf(
+                __('Connexion à GitHub réussie pour le dépôt %s.', 'sitemail'),
+                $this->github_repo
+            ),
+            'success'
+        );
+        
+        return true;
     }
 } 

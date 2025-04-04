@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 // GitHub repository info for updates
-define('SITEMAIL_GITHUB_REPO', 'acary/sitemail-wordpress');
+define('SITEMAIL_GITHUB_REPO', 'acaryca/sitemail-wordpress');
 define('SITEMAIL_PLUGIN_FILE', __FILE__);
 
 // Include GitHub Updater if not already included
@@ -85,8 +85,24 @@ class SiteMail_Service {
                 $debug
             );
             
+            // Make sure the update checks happen on appropriate pages
+            add_action('admin_init', array($this, 'trigger_update_check'));
+            
             // Add update check button in plugin row
             add_filter('plugin_row_meta', [$this, 'add_plugin_meta_links'], 10, 2);
+        }
+    }
+    
+    /**
+     * Trigger update check on appropriate admin pages
+     */
+    public function trigger_update_check() {
+        global $pagenow;
+        
+        // Only check on plugins or update pages
+        if ($pagenow === 'plugins.php' || $pagenow === 'update-core.php' || $pagenow === 'update.php') {
+            // Force WordPress to check for updates
+            delete_site_transient('update_plugins');
         }
     }
     
@@ -686,26 +702,29 @@ function sitemail_handle_update_check() {
                 $debug
             );
             
-            // Clear the updater cache
-            $updater->clear_cache();
-            
-            // Add a success message
-            add_settings_error(
-                'sitemail_update_check',
-                'sitemail_update_check_success',
-                __('Vérification des mises à jour SiteMail déclenchée avec succès.', 'sitemail'),
-                'updated'
-            );
-            set_transient('settings_errors', get_settings_errors(), 30);
+            // First test GitHub connection
+            if ($updater->test_connection()) {
+                // If connection is successful, force update check
+                $updater->force_update_check();
+            }
         }
         
-        // Force WordPress to check for updates
-        delete_site_transient('update_plugins');
+        // Redirect to the plugins page
         wp_redirect(admin_url('plugins.php?plugin_status=all&settings-updated=true'));
         exit;
     }
 }
 add_action('admin_init', 'sitemail_handle_update_check');
+
+/**
+ * Display update messages on the plugins page
+ */
+function sitemail_display_update_messages() {
+    if (class_exists('SiteMail_GitHub_Updater')) {
+        SiteMail_GitHub_Updater::display_update_messages();
+    }
+}
+add_action('admin_notices', 'sitemail_display_update_messages');
 
 /**
  * Function to test email sending
