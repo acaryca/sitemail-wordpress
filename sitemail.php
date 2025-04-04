@@ -15,14 +15,11 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// GitHub repository info for updates
-define('SITEMAIL_GITHUB_REPO', 'acaryca/sitemail-wordpress');
 define('SITEMAIL_PLUGIN_FILE', __FILE__);
 
-// Include GitHub Updater if not already included
-if (!class_exists('SiteMail_GitHub_Updater')) {
-    require_once plugin_dir_path(__FILE__) . 'includes/github-updater.php';
-}
+// Include Updater if not already included
+require_once plugin_dir_path(__FILE__) . '/includes/plugin-update-checker.php';
+
 
 class SiteMail_Service {
     /**
@@ -63,73 +60,6 @@ class SiteMail_Service {
         
         // Register settings
         add_action('admin_init', [$this, 'register_settings']);
-        
-        // Set up GitHub updater
-        add_action('init', [$this, 'setup_github_updater']);
-    }
-    
-    /**
-     * Set up the GitHub updater
-     */
-    public function setup_github_updater() {
-        if (class_exists('SiteMail_GitHub_Updater')) {
-            // Enable debug mode if WP_DEBUG is enabled
-            $debug = defined('WP_DEBUG') && WP_DEBUG;
-            
-            // Initialize the updater with debug enabled
-            new SiteMail_GitHub_Updater(
-                SITEMAIL_PLUGIN_FILE, 
-                SITEMAIL_GITHUB_REPO, 
-                'SiteMail', 
-                '', // No access token 
-                $debug
-            );
-            
-            // Make sure the update checks happen on appropriate pages
-            add_action('admin_init', array($this, 'trigger_update_check'));
-            
-            // Add update check button in plugin row
-            add_filter('plugin_row_meta', [$this, 'add_plugin_meta_links'], 10, 2);
-        }
-    }
-    
-    /**
-     * Trigger update check on appropriate admin pages
-     */
-    public function trigger_update_check() {
-        global $pagenow;
-        
-        // Only check on plugins or update pages
-        if ($pagenow === 'plugins.php' || $pagenow === 'update-core.php' || $pagenow === 'update.php') {
-            // Force WordPress to check for updates
-            delete_site_transient('update_plugins');
-        }
-    }
-    
-    /**
-     * Add meta links to plugin row
-     *
-     * @param array $links Current links
-     * @param string $file Current plugin file
-     * @return array Modified links
-     */
-    public function add_plugin_meta_links($links, $file) {
-        if ($file == plugin_basename(SITEMAIL_PLUGIN_FILE)) {
-            $check_update_url = wp_nonce_url(
-                add_query_arg(
-                    [
-                        'action' => 'sitemail_check_update',
-                        'plugin' => plugin_basename(SITEMAIL_PLUGIN_FILE)
-                    ],
-                    admin_url('plugins.php')
-                ),
-                'sitemail-check-update'
-            );
-            
-            $links[] = '<a href="' . esc_url($check_update_url) . '">' . __('Check for updates', 'sitemail') . '</a>';
-        }
-        
-        return $links;
     }
     
     /**
@@ -217,34 +147,6 @@ class SiteMail_Service {
                     <a href="<?php echo esc_url(add_query_arg(['sitemail_test' => '1'])); ?>" class="button"><?php _e('Envoyer un email de test', 'sitemail'); ?></a>
                     <a href="<?php echo esc_url(add_query_arg(['sitemail_test_api' => '1'])); ?>" class="button"><?php _e('Tester la connexion API', 'sitemail'); ?></a>
                     <a href="<?php echo esc_url(add_query_arg(['sitemail_direct_api' => '1'])); ?>" class="button"><?php _e('Test direct API', 'sitemail'); ?></a>
-                </p>
-                
-                <hr>
-                <h2><?php _e('Mises à jour du plugin', 'sitemail'); ?></h2>
-                <p><?php _e('SiteMail peut être mis à jour automatiquement depuis GitHub.', 'sitemail'); ?></p>
-                <p>
-                    <?php 
-                    $check_update_url = wp_nonce_url(
-                        add_query_arg(
-                            [
-                                'action' => 'sitemail_check_update',
-                                'plugin' => plugin_basename(SITEMAIL_PLUGIN_FILE)
-                            ],
-                            admin_url('plugins.php')
-                        ),
-                        'sitemail-check-update'
-                    );
-                    ?>
-                    <a href="<?php echo esc_url($check_update_url); ?>" class="button button-primary"><?php _e('Vérifier les mises à jour', 'sitemail'); ?></a>
-                    <a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="button"><?php _e('Voir toutes les mises à jour', 'sitemail'); ?></a>
-                </p>
-                <p class="description">
-                    <?php printf(
-                        __('Version actuelle: %s | Dépôt GitHub: <a href="%s" target="_blank">%s</a>', 'sitemail'),
-                        esc_html(get_plugin_data(SITEMAIL_PLUGIN_FILE)['Version']),
-                        esc_url('https://github.com/' . SITEMAIL_GITHUB_REPO),
-                        esc_html(SITEMAIL_GITHUB_REPO)
-                    ); ?>
                 </p>
                 
                 <?php submit_button(); ?>
