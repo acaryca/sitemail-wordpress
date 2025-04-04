@@ -206,11 +206,7 @@ class SiteMail_Admin {
                         <?php _e('Vous pouvez tester votre configuration en utilisant les options ci-dessous.', 'sitemail'); ?>
                     </p>
                     
-                    <div class="sitemail-test-options">
-                        <a href="<?php echo esc_url(add_query_arg(['sitemail_test' => '1'])); ?>" class="button"><?php _e('Envoyer un email de test', 'sitemail'); ?></a>
-                        <a href="<?php echo esc_url(add_query_arg(['sitemail_test_api' => '1'])); ?>" class="button"><?php _e('Tester la connexion API', 'sitemail'); ?></a>
-                        <a href="<?php echo esc_url(add_query_arg(['sitemail_direct_api' => '1'])); ?>" class="button"><?php _e('Test direct API', 'sitemail'); ?></a>
-                    </div>
+                    <div id="sitemail-test-result" style="display: none; margin-bottom: 15px;"></div>
                     
                     <form id="sitemail-custom-test-form" method="post">
                         <table class="form-table">
@@ -232,8 +228,6 @@ class SiteMail_Admin {
                             <span class="spinner" id="sitemail-test-spinner" style="float: none; margin-top: 0;"></span>
                         </p>
                     </form>
-                    
-                    <div id="sitemail-test-result" style="display: none; margin-top: 15px;"></div>
                     
                     <script>
                         jQuery(document).ready(function($) {
