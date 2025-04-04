@@ -21,8 +21,8 @@ class SiteMail_GitHub_Updater {
     private $authorize_token;
     private $github_url = 'https://api.github.com/repos/';
     private $debug = false;
-    private $update_messages = array();
     private $plugin_info;
+    private $messages;
 
     /**
      * Constructor
@@ -40,13 +40,20 @@ class SiteMail_GitHub_Updater {
         $this->authorize_token = $access_token;
         $this->debug = $debug || (defined('SITEMAIL_DEBUG') && SITEMAIL_DEBUG);
         
-        // Load the plugin info handler
+        // Load required components
         require_once plugin_dir_path($file) . 'includes/github-plugin-info.php';
-        $this->plugin_info = new SiteMail_GitHub_Plugin_Info($file, $github_repo, $plugin_name);
+        require_once plugin_dir_path($file) . 'includes/github-updater-messages.php';
         
+        $this->plugin_info = new SiteMail_GitHub_Plugin_Info($file, $github_repo, $plugin_name);
+        $this->messages = new SiteMail_GitHub_Updater_Messages($this->debug);
+        
+        // Add WordPress hooks
         add_filter('pre_set_site_transient_update_plugins', array($this, 'check_update'));
         add_filter('plugins_api', array($this->plugin_info, 'plugin_popup'), 10, 3);
         add_filter('upgrader_post_install', array($this, 'after_install'), 10, 3);
+        
+        // Add action to display messages
+        add_action('admin_notices', array('SiteMail_GitHub_Updater_Messages', 'display_messages'));
         
         $this->initialize();
         
@@ -102,7 +109,7 @@ class SiteMail_GitHub_Updater {
             error_log('SiteMail GitHub Updater Error: ' . $error_message);
             
             // Add error message for the user
-            $this->add_update_message(
+            $this->messages->add_message(
                 sprintf(
                     __('Erreur lors de la connexion à GitHub: %s', 'sitemail'),
                     $error_message
@@ -122,7 +129,7 @@ class SiteMail_GitHub_Updater {
             error_log('SiteMail GitHub Updater Error: ' . $error_message);
             
             // Add error message for the user
-            $this->add_update_message(
+            $this->messages->add_message(
                 sprintf(
                     __('Erreur lors de la récupération des mises à jour: Code %s. Vérifiez que le dépôt GitHub %s existe et est accessible.', 'sitemail'),
                     $response_code,
@@ -150,7 +157,7 @@ class SiteMail_GitHub_Updater {
         error_log('SiteMail GitHub Updater Error: Invalid response from GitHub');
         
         // Add error message for the user
-        $this->add_update_message(
+        $this->messages->add_message(
             __('Réponse invalide reçue de GitHub. Impossible de vérifier les mises à jour.', 'sitemail'),
             'error'
         );
@@ -178,7 +185,7 @@ class SiteMail_GitHub_Updater {
             $this->log_debug('New version ' . $this->get_version_from_tag($remote['tag_name']) . ' available. Current: ' . $this->plugin['Version']);
             
             // Add message about new version
-            $this->add_update_message(
+            $this->messages->add_message(
                 sprintf(
                     __('Nouvelle version %s disponible pour %s! Version actuelle: %s', 'sitemail'),
                     $this->get_version_from_tag($remote['tag_name']),
@@ -197,19 +204,9 @@ class SiteMail_GitHub_Updater {
             $response->tested = isset($remote['tested']) ? $remote['tested'] : get_bloginfo('version');
             $response->requires = isset($remote['requires']) ? $remote['requires'] : '5.0';
             $response->requires_php = isset($remote['requires_php']) ? $remote['requires_php'] : '7.0';
-            $response->icons = [
-                '1x' => 'https://raw.githubusercontent.com/' . $this->github_repo . '/main/assets/icon-128x128.png',
-                '2x' => 'https://raw.githubusercontent.com/' . $this->github_repo . '/main/assets/icon-256x256.png'
-            ];
-            $response->banners = [
-                'low' => 'https://raw.githubusercontent.com/' . $this->github_repo . '/main/assets/banner-772x250.jpg',
-                'high' => 'https://raw.githubusercontent.com/' . $this->github_repo . '/main/assets/banner-1544x500.jpg'
-            ];
             
             // Important: Add this to enable the "View details" button
-            if (!isset($response->id)) {
-                $response->id = $this->github_repo;
-            }
+            $response->id = $this->github_repo;
             
             $transient->response[$this->basename] = $response;
             $this->log_debug('Added update information to transient');
@@ -218,7 +215,7 @@ class SiteMail_GitHub_Updater {
             
             // Check if this was triggered manually by the user
             if (isset($_GET['action']) && $_GET['action'] === 'sitemail_check_update') {
-                $this->add_update_message(
+                $this->messages->add_message(
                     sprintf(
                         __('Le plugin %s est à jour (version %s)', 'sitemail'),
                         $this->plugin_name,
@@ -253,49 +250,12 @@ class SiteMail_GitHub_Updater {
         delete_site_transient('update_plugins');
         
         // Add a message for the user
-        $this->add_update_message(
+        $this->messages->add_message(
             __('Vérification des mises à jour déclenchée avec succès.', 'sitemail'),
             'success'
         );
         
         return true;
-    }
-
-    /**
-     * Add update message
-     * 
-     * @param string $message Message text
-     * @param string $type Message type (success, error, warning)
-     */
-    public function add_update_message($message, $type = 'success') {
-        $this->update_messages[] = array(
-            'message' => $message,
-            'type' => $type
-        );
-        
-        // Store messages as transient
-        set_transient('sitemail_update_messages', $this->update_messages, 30);
-    }
-    
-    /**
-     * Display stored update messages
-     */
-    public static function display_update_messages() {
-        $messages = get_transient('sitemail_update_messages');
-        
-        if (!empty($messages) && is_array($messages)) {
-            foreach ($messages as $message) {
-                $class = 'notice notice-' . esc_attr($message['type']);
-                printf(
-                    '<div class="%1$s"><p>%2$s</p></div>',
-                    $class,
-                    esc_html($message['message'])
-                );
-            }
-            
-            // Clean up the transient
-            delete_transient('sitemail_update_messages');
-        }
     }
 
     /**
@@ -361,7 +321,7 @@ class SiteMail_GitHub_Updater {
         $has_update = version_compare($current_version, $remote_version, '<');
         
         if ($has_update) {
-            $this->add_update_message(
+            $this->messages->add_message(
                 sprintf(
                     __('Mise à jour disponible pour %s: version %s. Votre version actuelle est %s.', 'sitemail'),
                     $this->plugin_name,
@@ -371,7 +331,7 @@ class SiteMail_GitHub_Updater {
                 'info'
             );
         } else {
-            $this->add_update_message(
+            $this->messages->add_message(
                 sprintf(
                     __('Vous utilisez la dernière version de %s (%s).', 'sitemail'),
                     $this->plugin_name,
@@ -407,7 +367,7 @@ class SiteMail_GitHub_Updater {
             $error_message = $response->get_error_message();
             $this->log_debug('GitHub connection test failed: ' . $error_message);
             
-            $this->add_update_message(
+            $this->messages->add_message(
                 sprintf(
                     __('Échec de la connexion à GitHub: %s', 'sitemail'),
                     $error_message
@@ -423,7 +383,7 @@ class SiteMail_GitHub_Updater {
         if ($response_code !== 200) {
             $this->log_debug('GitHub connection test received unexpected response code: ' . $response_code);
             
-            $this->add_update_message(
+            $this->messages->add_message(
                 sprintf(
                     __('Connexion à GitHub établie mais avec une réponse inattendue (code %s). Vérifiez que le dépôt %s existe.', 'sitemail'),
                     $response_code,
@@ -436,7 +396,7 @@ class SiteMail_GitHub_Updater {
         }
         
         $this->log_debug('GitHub connection test successful');
-        $this->add_update_message(
+        $this->messages->add_message(
             sprintf(
                 __('Connexion à GitHub réussie pour le dépôt %s.', 'sitemail'),
                 $this->github_repo
