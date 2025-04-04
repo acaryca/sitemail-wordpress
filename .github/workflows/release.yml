@@ -85,14 +85,14 @@ jobs:
           # Get version from tag
           VERSION=${GITHUB_REF#refs/tags/}
           
-          # Create a directory for the plugin
+          # Create plugin directory with correct name
           mkdir -p sitemail
           
-          # Copy all files to the plugin directory
-          rsync -av --progress ./ sitemail/ --exclude .git --exclude .github --exclude .gitignore --exclude "*.zip" --exclude "*.log" --exclude "node_modules" --exclude ".DS_Store"
+          # Copy all relevant files directly to the plugin directory
+          rsync -av --progress ./ sitemail/ --exclude .git --exclude .github --exclude .gitignore --exclude "*.zip" --exclude "*.log" --exclude "node_modules" --exclude ".DS_Store" --exclude sitemail
           
-          # Create the zip file
-          zip -r sitemail-$VERSION.zip sitemail
+          # Create the zip file without including parent directory in archive
+          cd sitemail && zip -r ../sitemail-$VERSION.zip . && cd ..
       
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
