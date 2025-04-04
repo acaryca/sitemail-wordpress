@@ -123,7 +123,34 @@ class SiteMail_Service {
      * Register the plugin settings
      */
     public function register_settings() {
-        register_setting('sitemail_settings', 'sitemail_api_key');
+        register_setting(
+            'sitemail_settings',
+            'sitemail_api_key',
+            [
+                'sanitize_callback' => [$this, 'validate_settings']
+            ]
+        );
+    }
+    
+    /**
+     * Validate settings and add confirmation message
+     * 
+     * @param string $input The value to validate
+     * @return string The sanitized value
+     */
+    public function validate_settings($input) {
+        // Sanitize the API key
+        $api_key = sanitize_text_field($input);
+        
+        // Add a success message
+        add_settings_error(
+            'sitemail_settings',
+            'sitemail_settings_updated',
+            __('Paramètres SiteMail enregistrés avec succès.', 'sitemail'),
+            'updated'
+        );
+        
+        return $api_key;
     }
     
     /**
@@ -145,6 +172,12 @@ class SiteMail_Service {
         ?>
         <div class="wrap">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+            
+            <?php
+            // Show error/update messages
+            settings_errors('sitemail_settings');
+            ?>
+            
             <form method="post" action="options.php">
                 <?php
                 settings_fields('sitemail_settings');
@@ -345,12 +378,45 @@ class SiteMail_Service {
     }
 }
 
-// Initialize the service
+/**
+ * Initialize the service
+ */
 function sitemail_init() {
     global $sitemail_service;
     $sitemail_service = new SiteMail_Service();
+    
+    // Add hook to show stored error messages after redirect
+    add_action('admin_notices', 'sitemail_show_stored_messages');
 }
 add_action('plugins_loaded', 'sitemail_init');
+
+/**
+ * Show stored settings error messages
+ */
+function sitemail_show_stored_messages() {
+    // Only on our settings page
+    $screen = get_current_screen();
+    if (!$screen || $screen->id !== 'settings_page_sitemail-settings') {
+        return;
+    }
+    
+    // Check if we have stored messages
+    $stored_errors = get_transient('sitemail_settings_errors');
+    if ($stored_errors) {
+        // Add the stored errors to be displayed
+        foreach ($stored_errors as $error) {
+            add_settings_error(
+                $error['setting'],
+                $error['code'],
+                $error['message'],
+                $error['type']
+            );
+        }
+        
+        // Clean up the transient
+        delete_transient('sitemail_settings_errors');
+    }
+}
 
 /**
  * Handle update check action
@@ -403,8 +469,11 @@ function sitemail_test_email() {
         );
     }
     
+    // Store the messages so they can be displayed after redirect
+    set_transient('sitemail_settings_errors', get_settings_errors('sitemail_settings'), 30);
+    
     // Redirect to the settings page
-    wp_redirect(admin_url('options-general.php?page=sitemail-settings'));
+    wp_redirect(admin_url('options-general.php?page=sitemail-settings&settings-updated=true'));
     exit;
 }
 
