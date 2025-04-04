@@ -15,6 +15,15 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// GitHub repository info for updates
+define('SITEMAIL_GITHUB_REPO', 'acary/sitemail-wordpress');
+define('SITEMAIL_PLUGIN_FILE', __FILE__);
+
+// Include GitHub Updater if not already included
+if (!class_exists('SiteMail_GitHub_Updater')) {
+    require_once plugin_dir_path(__FILE__) . 'includes/github-updater.php';
+}
+
 class SiteMail_Service {
     /**
      * SiteMail API key
@@ -54,6 +63,47 @@ class SiteMail_Service {
         
         // Register settings
         add_action('admin_init', [$this, 'register_settings']);
+        
+        // Set up GitHub updater
+        add_action('init', [$this, 'setup_github_updater']);
+    }
+    
+    /**
+     * Set up the GitHub updater
+     */
+    public function setup_github_updater() {
+        if (class_exists('SiteMail_GitHub_Updater')) {
+            new SiteMail_GitHub_Updater(SITEMAIL_PLUGIN_FILE, SITEMAIL_GITHUB_REPO, 'SiteMail');
+            
+            // Add update check button in plugin row
+            add_filter('plugin_row_meta', [$this, 'add_plugin_meta_links'], 10, 2);
+        }
+    }
+    
+    /**
+     * Add meta links to plugin row
+     *
+     * @param array $links Current links
+     * @param string $file Current plugin file
+     * @return array Modified links
+     */
+    public function add_plugin_meta_links($links, $file) {
+        if ($file == plugin_basename(SITEMAIL_PLUGIN_FILE)) {
+            $check_update_url = wp_nonce_url(
+                add_query_arg(
+                    [
+                        'action' => 'sitemail_check_update',
+                        'plugin' => plugin_basename(SITEMAIL_PLUGIN_FILE)
+                    ],
+                    admin_url('plugins.php')
+                ),
+                'sitemail-check-update'
+            );
+            
+            $links[] = '<a href="' . esc_url($check_update_url) . '">' . __('Check for updates', 'sitemail') . '</a>';
+        }
+        
+        return $links;
     }
     
     /**
@@ -301,6 +351,23 @@ function sitemail_init() {
     $sitemail_service = new SiteMail_Service();
 }
 add_action('plugins_loaded', 'sitemail_init');
+
+/**
+ * Handle update check action
+ */
+function sitemail_handle_update_check() {
+    if (
+        isset($_GET['action']) && $_GET['action'] === 'sitemail_check_update' &&
+        isset($_GET['plugin']) && $_GET['plugin'] === plugin_basename(SITEMAIL_PLUGIN_FILE) &&
+        check_admin_referer('sitemail-check-update')
+    ) {
+        // Force WordPress to check for updates
+        delete_site_transient('update_plugins');
+        wp_redirect(admin_url('plugins.php?plugin_status=all'));
+        exit;
+    }
+}
+add_action('admin_init', 'sitemail_handle_update_check');
 
 /**
  * Function to test email sending
