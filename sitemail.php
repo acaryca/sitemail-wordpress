@@ -35,7 +35,7 @@ class SiteMail_Service {
      * SiteMail API URL
      * @var string
      */
-    private $api_url = 'https://api2.sitemail.ca/v2/send/';
+    private $api_url = 'https://api.sitemail.ca/v2/send/';
 
     /**
      * Constructor - initializes the plugin
