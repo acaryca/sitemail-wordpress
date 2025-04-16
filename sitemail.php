@@ -109,7 +109,7 @@ class SiteMail_Service {
     public function display_api_key_notice() {
         $class = 'notice notice-error';
         $message = sprintf(
-            __('SiteMail API: Please <a href="%s">configure your SiteMail API key</a> to enable email sending features.', 'sitemail'),
+            __('SiteMail: Please <a href="%s">configure your SiteMail API key</a> to enable email sending features or change it to SMTP.', 'sitemail'),
             admin_url('options-general.php?page=sitemail-settings')
         );
         printf('<div class="%1$s"><p>%2$s</p></div>', esc_attr($class), $message);
