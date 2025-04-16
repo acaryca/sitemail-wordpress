@@ -1,6 +1,6 @@
 # sitemail-wordpress
 
-Replace WordPress email function with SiteMail API
+Replace WordPress email function with SiteMail API or SMTP
 
 ## Installation
 
