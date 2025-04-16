@@ -30,9 +30,6 @@ class SiteMail_Admin {
         // Add hook to show stored error messages after redirect
         add_action('admin_notices', [$this, 'show_stored_messages']);
         
-        // Enqueue admin styles
-        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
-        
         // Setup test routes
         $this->setup_test_routes();
         
@@ -72,8 +69,8 @@ class SiteMail_Admin {
      */
     public function add_admin_menu() {
         add_options_page(
-            'SiteMail',
-            'SiteMail', 
+            'Envoi d\'emails',
+            'Envoi d\'emails', 
             'manage_options', 
             'sitemail-settings', 
             [$this, 'render_settings_page']
@@ -87,13 +84,6 @@ class SiteMail_Admin {
         if ($hook !== 'settings_page_sitemail-settings') {
             return;
         }
-        
-        wp_enqueue_style(
-            'sitemail-admin-styles',
-            plugin_dir_url(SITEMAIL_PLUGIN_FILE) . 'admin/style.css',
-            [],
-            filemtime(plugin_dir_path(SITEMAIL_PLUGIN_FILE) . 'admin/style.css')
-        );
         
         wp_enqueue_script('jquery');
     }
@@ -115,6 +105,65 @@ class SiteMail_Admin {
             'sitemail_sender_name',
             [
                 'sanitize_callback' => 'sanitize_text_field'
+            ]
+        );
+
+        register_setting(
+            'sitemail_settings',
+            'sitemail_mailer_type',
+            [
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => 'sitemail'
+            ]
+        );
+
+        // SMTP Settings
+        register_setting(
+            'sitemail_settings',
+            'sitemail_smtp_host',
+            [
+                'sanitize_callback' => 'sanitize_text_field'
+            ]
+        );
+
+        register_setting(
+            'sitemail_settings',
+            'sitemail_smtp_port',
+            [
+                'sanitize_callback' => 'sanitize_text_field'
+            ]
+        );
+
+        register_setting(
+            'sitemail_settings',
+            'sitemail_smtp_username',
+            [
+                'sanitize_callback' => 'sanitize_text_field'
+            ]
+        );
+
+        register_setting(
+            'sitemail_settings',
+            'sitemail_smtp_password',
+            [
+                'sanitize_callback' => 'sanitize_text_field'
+            ]
+        );
+
+        register_setting(
+            'sitemail_settings',
+            'sitemail_smtp_encryption',
+            [
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => 'tls'
+            ]
+        );
+
+        register_setting(
+            'sitemail_settings',
+            'sitemail_smtp_from_email',
+            [
+                'sanitize_callback' => 'sanitize_email'
             ]
         );
     }
@@ -160,113 +209,180 @@ class SiteMail_Admin {
         if (!current_user_can('manage_options')) {
             wp_die(__('Désolé, vous n\'avez pas l\'autorisation d\'accéder à cette page.', 'sitemail'));
         }
+        
+        // Récupérer l'onglet actif
+        $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'options';
         ?>
-        <div class="sitemail__container">
+        <div class="wrap">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-            <p>
-                <?php _e('Cette page vous permet de configurer l\'envoi d\'emails depuis votre site via SiteMail.', 'sitemail'); ?>
-            </p>
             
-            <form method="post" action="options.php" class="sitemail__block">
-                <?php
-                settings_fields('sitemail_settings');
-                do_settings_sections('sitemail_settings');
-                ?>
-                <div class="sitemail__block-header">
-                    <h3><?php _e('Configuration', 'sitemail'); ?></h3>
-                </div>
-                <div class="sitemail__block-content">
+            <h2 class="nav-tab-wrapper">
+                <a href="?page=sitemail-settings&tab=options" class="nav-tab <?php echo $active_tab === 'options' ? 'nav-tab-active' : ''; ?>">
+                    <?php _e('Options', 'sitemail'); ?>
+                </a>
+                <a href="?page=sitemail-settings&tab=test" class="nav-tab <?php echo $active_tab === 'test' ? 'nav-tab-active' : ''; ?>">
+                    <?php _e('Test', 'sitemail'); ?>
+                </a>
+            </h2>
+            
+            <?php if ($active_tab === 'options') : ?>
+                <form method="post" action="options.php">
+                    <?php
+                    settings_fields('sitemail_settings');
+                    do_settings_sections('sitemail_settings');
+                    ?>
                     <table class="form-table">
                         <tr valign="top">
-                            <th scope="row"><?php _e('Clé API SiteMail', 'sitemail'); ?></th>
+                            <th scope="row"><?php _e('Type', 'sitemail'); ?></th>
                             <td>
-                                <input type="text" name="sitemail_api_key" value="<?php echo esc_attr(get_option('sitemail_api_key')); ?>" class="regular-text" />
-                                <p class="description"><?php _e('Entrez votre clé API SiteMail.', 'sitemail'); ?></p>
-                            </td>
-                        </tr>
-                        <tr valign="top">
-                            <th scope="row"><?php _e('Nom de l\'expéditeur', 'sitemail'); ?></th>
-                            <td>
-                                <input type="text" name="sitemail_sender_name" value="<?php echo esc_attr(get_option('sitemail_sender_name', get_bloginfo('name'))); ?>" class="regular-text" />
-                                <p class="description"><?php _e('Le nom qui apparaîtra comme expéditeur de vos emails.', 'sitemail'); ?></p>
+                                <select name="sitemail_mailer_type" id="sitemail_mailer_type">
+                                    <option value="smtp" <?php selected(get_option('sitemail_mailer_type', 'sitemail'), 'smtp'); ?>><?php _e('SMTP', 'sitemail'); ?></option>
+                                    <option value="sitemail" <?php selected(get_option('sitemail_mailer_type', 'sitemail'), 'sitemail'); ?>><?php _e('SiteMail', 'sitemail'); ?></option>
+                                </select>
                             </td>
                         </tr>
                     </table>
-                    
-                    <?php submit_button(); ?>
-                </div>
-            </form>
-        
-            <div class="sitemail__block">
-                <div class="sitemail__block-header">
-                    <h3><?php _e('Tester l\'envoi d\'emails', 'sitemail'); ?></h3>
-                </div>
-                <div class="sitemail__block-content">
-                    <p>
-                        <?php _e('Vous pouvez tester votre configuration en utilisant les options ci-dessous.', 'sitemail'); ?>
-                    </p>
-                    
-                    <div id="sitemail-test-result" style="display: none; margin-bottom: 15px;"></div>
-                    
-                    <form id="sitemail-custom-test-form" method="post">
+
+                    <div id="sitemail_options" style="display: <?php echo get_option('sitemail_mailer_type', 'sitemail') === 'sitemail' ? 'block' : 'none'; ?>">
                         <table class="form-table">
                             <tr valign="top">
-                                <th scope="row"><?php _e('Email qui recevra le test', 'sitemail'); ?></th>
+                                <th scope="row"><?php _e('Clé SiteMail', 'sitemail'); ?></th>
                                 <td>
-                                    <input type="email" id="sitemail-test-email" name="sitemail_test_email" value="<?php echo esc_attr(get_option('admin_email')); ?>" class="regular-text" required />
+                                    <input type="text" name="sitemail_api_key" value="<?php echo esc_attr(get_option('sitemail_api_key')); ?>" class="regular-text" />
+                                    <p class="description"><?php _e('Entrez votre clé API SiteMail.', 'sitemail'); ?></p>
+                                </td>
+                            </tr>
+                            <tr valign="top">
+                                <th scope="row"><?php _e('Nom de l\'expéditeur', 'sitemail'); ?></th>
+                                <td>
+                                    <input type="text" name="sitemail_sender_name" value="<?php echo esc_attr(get_option('sitemail_sender_name', get_bloginfo('name'))); ?>" class="regular-text" />
+                                    <p class="description"><?php _e('Le nom qui apparaîtra comme expéditeur de vos emails.', 'sitemail'); ?></p>
                                 </td>
                             </tr>
                         </table>
-                        <p class="submit">
-                            <button type="submit" class="button button-primary" id="sitemail-send-test"><?php _e('Envoyer l\'email de test', 'sitemail'); ?></button>
-                            <span class="spinner" id="sitemail-test-spinner" style="float: none; margin-top: 0;"></span>
-                        </p>
-                    </form>
+                    </div>
+
+                    <div id="smtp_options" style="display: <?php echo get_option('sitemail_mailer_type', 'sitemail') === 'smtp' ? 'block' : 'none'; ?>">
+                        <table class="form-table">
+                            <tr valign="top">
+                                <th scope="row"><?php _e('Serveur SMTP', 'sitemail'); ?></th>
+                                <td>
+                                    <input type="text" name="sitemail_smtp_host" value="<?php echo esc_attr(get_option('sitemail_smtp_host')); ?>" class="regular-text" />
+                                    <p class="description"><?php _e('Adresse du serveur SMTP (ex: smtp.example.com).', 'sitemail'); ?></p>
+                                </td>
+                            </tr>
+                            <tr valign="top">
+                                <th scope="row"><?php _e('Port SMTP', 'sitemail'); ?></th>
+                                <td>
+                                    <input type="text" name="sitemail_smtp_port" value="<?php echo esc_attr(get_option('sitemail_smtp_port', '587')); ?>" class="regular-text" />
+                                    <p class="description"><?php _e('Port du serveur SMTP (ex: 587 pour TLS).', 'sitemail'); ?></p>
+                                </td>
+                            </tr>
+                            <tr valign="top">
+                                <th scope="row"><?php _e('Nom d\'utilisateur SMTP', 'sitemail'); ?></th>
+                                <td>
+                                    <input type="text" name="sitemail_smtp_username" value="<?php echo esc_attr(get_option('sitemail_smtp_username')); ?>" class="regular-text" />
+                                    <p class="description"><?php _e('Votre nom d\'utilisateur SMTP.', 'sitemail'); ?></p>
+                                </td>
+                            </tr>
+                            <tr valign="top">
+                                <th scope="row"><?php _e('Mot de passe SMTP', 'sitemail'); ?></th>
+                                <td>
+                                    <input type="password" name="sitemail_smtp_password" value="<?php echo esc_attr(get_option('sitemail_smtp_password')); ?>" class="regular-text" />
+                                    <p class="description"><?php _e('Votre mot de passe SMTP.', 'sitemail'); ?></p>
+                                </td>
+                            </tr>
+                            <tr valign="top">
+                                <th scope="row"><?php _e('Chiffrement', 'sitemail'); ?></th>
+                                <td>
+                                    <select name="sitemail_smtp_encryption">
+                                        <option value="tls" <?php selected(get_option('sitemail_smtp_encryption', 'tls'), 'tls'); ?>>TLS</option>
+                                        <option value="ssl" <?php selected(get_option('sitemail_smtp_encryption', 'tls'), 'ssl'); ?>>SSL</option>
+                                        <option value="none" <?php selected(get_option('sitemail_smtp_encryption', 'tls'), 'none'); ?>>Aucun</option>
+                                    </select>
+                                    <p class="description"><?php _e('Type de chiffrement à utiliser.', 'sitemail'); ?></p>
+                                </td>
+                            </tr>
+                            <tr valign="top">
+                                <th scope="row"><?php _e('Email SMTP', 'sitemail'); ?></th>
+                                <td>
+                                    <input type="email" name="sitemail_smtp_from_email" value="<?php echo esc_attr(get_option('sitemail_smtp_from_email')); ?>" class="regular-text" />
+                                    <p class="description"><?php _e('L\'adresse email qui sera utilisée pour envoyer les courriels.', 'sitemail'); ?></p>
+                                </td>
+                            </tr>
+                            <tr valign="top">
+                                <th scope="row"><?php _e('Nom de l\'expéditeur', 'sitemail'); ?></th>
+                                <td>
+                                    <input type="text" name="sitemail_sender_name" value="<?php echo esc_attr(get_option('sitemail_sender_name', get_bloginfo('name'))); ?>" class="regular-text" />
+                                    <p class="description"><?php _e('Le nom qui apparaîtra comme expéditeur de vos emails.', 'sitemail'); ?></p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
                     
-                    <script>
-                        jQuery(document).ready(function($) {
-                            $('#sitemail-custom-test-form').on('submit', function(e) {
-                                e.preventDefault();
-                                
-                                var email = $('#sitemail-test-email').val();
-                                
-                                $('#sitemail-send-test').prop('disabled', true);
-                                $('#sitemail-test-spinner').addClass('is-active');
-                                $('#sitemail-test-result').hide();
-                                
-                                $.post(ajaxurl, {
-                                    action: 'sitemail_send_test_email',
-                                    email: email,
-                                    subject: "Test email via SiteMail",
-                                    nonce: '<?php echo wp_create_nonce('sitemail_test_nonce'); ?>'
-                                }, function(response) {
-                                    $('#sitemail-test-result').html(response).show();
-                                    $('#sitemail-send-test').prop('disabled', false);
-                                    $('#sitemail-test-spinner').removeClass('is-active');
-                                }).fail(function() {
-                                    $('#sitemail-test-result').html('<div class="notice notice-error inline"><p><?php echo esc_js(__('Une erreur s\'est produite lors de l\'envoi de l\'email de test.', 'sitemail')); ?></p></div>').show();
-                                    $('#sitemail-send-test').prop('disabled', false);
-                                    $('#sitemail-test-spinner').removeClass('is-active');
-                                });
+                    <?php submit_button(); ?>
+                </form>
+
+                <script>
+                jQuery(document).ready(function($) {
+                    $('#sitemail_mailer_type').on('change', function() {
+                        if ($(this).val() === 'sitemail') {
+                            $('#sitemail_options').show();
+                            $('#smtp_options').hide();
+                        } else {
+                            $('#sitemail_options').hide();
+                            $('#smtp_options').show();
+                        }
+                    });
+                });
+                </script>
+            <?php elseif ($active_tab === 'test') : ?>
+                <div id="sitemail-test-result" style="display: none; margin-bottom: 15px;"></div>
+                
+                <form id="sitemail-custom-test-form" method="post">
+                    <table class="form-table">
+                        <tr valign="top">
+                            <th scope="row"><?php _e('Email qui recevra le test', 'sitemail'); ?></th>
+                            <td>
+                                <input type="email" id="sitemail-test-email" name="sitemail_test_email" value="<?php echo esc_attr(get_option('admin_email')); ?>" class="regular-text" required />
+                            </td>
+                        </tr>
+                    </table>
+                    <p class="submit">
+                        <button type="submit" class="button button-primary" id="sitemail-send-test"><?php _e('Envoyer l\'email de test', 'sitemail'); ?></button>
+                        <span class="spinner" id="sitemail-test-spinner" style="float: none; margin-top: 0;"></span>
+                    </p>
+                </form>
+                
+                <script>
+                    jQuery(document).ready(function($) {
+                        $('#sitemail-custom-test-form').on('submit', function(e) {
+                            e.preventDefault();
+                            
+                            var email = $('#sitemail-test-email').val();
+                            
+                            $('#sitemail-send-test').prop('disabled', true);
+                            $('#sitemail-test-spinner').addClass('is-active');
+                            $('#sitemail-test-result').hide();
+                            
+                            $.post(ajaxurl, {
+                                action: 'sitemail_send_test_email',
+                                email: email,
+                                subject: "Test email via SiteMail",
+                                nonce: '<?php echo wp_create_nonce('sitemail_test_nonce'); ?>'
+                            }, function(response) {
+                                $('#sitemail-test-result').html(response).show();
+                                $('#sitemail-send-test').prop('disabled', false);
+                                $('#sitemail-test-spinner').removeClass('is-active');
+                            }).fail(function() {
+                                $('#sitemail-test-result').html('<div class="notice notice-error inline"><p><?php echo esc_js(__('Une erreur s\'est produite lors de l\'envoi de l\'email de test.', 'sitemail')); ?></p></div>').show();
+                                $('#sitemail-send-test').prop('disabled', false);
+                                $('#sitemail-test-spinner').removeClass('is-active');
                             });
                         });
-                    </script>
-                </div>
-            </div>
-            
-            <div class="sitemail__block">
-                <div class="sitemail__block-header">
-                    <h3><?php _e('À propos de SiteMail', 'sitemail'); ?></h3>
-                </div>
-                <div class="sitemail__block-content">
-                    <p>
-                        <?php _e('SiteMail est un service d\'envoi d\'emails créé par ACARY. Ce plugin vous permet de connecter votre site à SiteMail pour bénéficier d\'un envoi d\'emails fiable.', 'sitemail'); ?>
-                    </p>
-                    <p>
-                        <?php _e('Pour plus d\'informations, visitez <a href="https://sitemail.ca" target="_blank">sitemail.ca</a>.', 'sitemail'); ?>
-                    </p>
-                </div>
-            </div>
+                    });
+                </script>
+            <?php endif; ?>
         </div>
         <?php
     }

@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: SiteMail
- * Description: Replace WordPress email function with SiteMail API
+ * Description: Replace WordPress email function with SiteMail API or SMTP
  * Version: 1.0.6
  * Author: ACARY
  * Author URI: https://acary.ca
@@ -23,6 +23,8 @@ require_once plugin_dir_path(__FILE__) . '/includes/plugin-update-checker.php';
 // Include admin functionality
 require_once plugin_dir_path(__FILE__) . '/admin/admin.php';
 
+// Import PHPMailer namespace
+use PHPMailer\PHPMailer\PHPMailer;
 
 class SiteMail_Service {
     /**
@@ -45,7 +47,7 @@ class SiteMail_Service {
         $this->api_key = defined('SITEMAIL_API_KEY') ? SITEMAIL_API_KEY : get_option('sitemail_api_key', '');
         
         // Check if the API key is defined
-        if (empty($this->api_key)) {
+        if (empty($this->api_key) && get_option('sitemail_mailer_type', 'sitemail') === 'sitemail') {
             add_action('admin_notices', [$this, 'display_api_key_notice']);
         }
 
@@ -54,6 +56,51 @@ class SiteMail_Service {
         
         // Log email failures
         add_action('wp_mail_failed', [$this, 'log_email_error']);
+
+        // Configure PHPMailer for SMTP if needed
+        if (get_option('sitemail_mailer_type', 'sitemail') === 'smtp') {
+            add_action('phpmailer_init', [$this, 'configure_smtp']);
+        }
+    }
+
+    /**
+     * Configure PHPMailer for SMTP
+     * 
+     * @param PHPMailer $phpmailer The PHPMailer instance
+     */
+    public function configure_smtp($phpmailer) {
+        if (get_option('sitemail_mailer_type', 'sitemail') !== 'smtp') {
+            return;
+        }
+
+        $phpmailer->isSMTP();
+        $phpmailer->Host = get_option('sitemail_smtp_host', '');
+        $phpmailer->Port = get_option('sitemail_smtp_port', '587');
+        $phpmailer->Username = get_option('sitemail_smtp_username', '');
+        $phpmailer->Password = get_option('sitemail_smtp_password', '');
+        
+        $encryption = get_option('sitemail_smtp_encryption', 'tls');
+        if ($encryption === 'tls') {
+            $phpmailer->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        } elseif ($encryption === 'ssl') {
+            $phpmailer->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+        } else {
+            $phpmailer->SMTPSecure = '';
+        }
+        
+        $phpmailer->SMTPAuth = true;
+
+        // Set the sender name and email
+        $sender_name = get_option('sitemail_sender_name', get_bloginfo('name'));
+        $sender_email = get_option('sitemail_smtp_from_email', '');
+        
+        if (!empty($sender_name)) {
+            $phpmailer->FromName = $sender_name;
+        }
+        
+        if (!empty($sender_email)) {
+            $phpmailer->From = $sender_email;
+        }
     }
 
     /**
@@ -76,6 +123,11 @@ class SiteMail_Service {
      * @return bool|null
      */
     public function intercept_wp_mail($return, $atts) {
+        // If SMTP is selected, let WordPress handle the email
+        if (get_option('sitemail_mailer_type', 'sitemail') === 'smtp') {
+            return null;
+        }
+
         // Extract email data
         $to = $atts['to'];
         $subject = $atts['subject'];
@@ -149,7 +201,7 @@ class SiteMail_Service {
         }
         
         if (empty($from_name)) {
-            $from_name = 'WordPress';
+            $from_name = get_option('sitemail_sender_name', get_bloginfo('name'));
         }
         
         // Handle file attachments
