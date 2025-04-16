@@ -69,8 +69,8 @@ class SiteMail_Admin {
      */
     public function add_admin_menu() {
         add_options_page(
-            'Envoi d\'emails',
-            'Envoi d\'emails', 
+            __('Email settings', 'sitemail'),
+            __('Email settings', 'sitemail'), 
             'manage_options', 
             'sitemail-settings', 
             [$this, 'render_settings_page']
@@ -239,7 +239,7 @@ class SiteMail_Admin {
                                     <option value="smtp" <?php selected(get_option('sitemail_mailer_type', 'sitemail'), 'smtp'); ?>><?php _e('SMTP', 'sitemail'); ?></option>
                                     <option value="sitemail" <?php selected(get_option('sitemail_mailer_type', 'sitemail'), 'sitemail'); ?>><?php _e('SiteMail', 'sitemail'); ?></option>
                                 </select>
-                                <p class="description"><?php _e('Choisissez le type d\'envoi d\'emails que vous souhaitez utiliser.', 'sitemail'); ?></p>
+                                <p class="description"><?php _e('Choose the type of email sending you want to use.', 'sitemail'); ?></p>
                             </td>
                         </tr>
                     </table>
