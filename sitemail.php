@@ -109,7 +109,7 @@ class SiteMail_Service {
     public function display_api_key_notice() {
         $class = 'notice notice-error';
         $message = sprintf(
-            __('SiteMail API : Veuillez <a href="%s">configurer votre clé API SiteMail</a> pour activer les fonctionnalités d\'envoi d\'email.', 'sitemail'),
+            __('SiteMail API: Please <a href="%s">configure your SiteMail API key</a> to enable email sending features.', 'sitemail'),
             admin_url('options-general.php?page=sitemail-settings')
         );
         printf('<div class="%1$s"><p>%2$s</p></div>', esc_attr($class), $message);
@@ -240,7 +240,7 @@ class SiteMail_Service {
             $this->log_message('error', 'Aucun destinataire valide spécifié');
             
             // Créer une erreur WordPress
-            $error = new \WP_Error('wp_mail_failed', __('Aucun destinataire valide', 'sitemail'));
+            $error = new \WP_Error('wp_mail_failed', __('No valid recipient', 'sitemail'));
             do_action('wp_mail_failed', $error);
             
             return false;
@@ -296,7 +296,7 @@ class SiteMail_Service {
             return true;
         } else {
             // Failure
-            $error_message = isset($response['message']) ? $response['message'] : __('Erreur inconnue', 'sitemail');
+            $error_message = isset($response['message']) ? $response['message'] : __('Unknown error', 'sitemail');
             
             // Log the detailed error
             $error_details = '';
@@ -323,10 +323,10 @@ class SiteMail_Service {
     private function send_api_request($payload) {
         // Validate API URL
         if (empty($this->api_url)) {
-            $this->log_message('error', 'URL API SiteMail non configurée');
+            $this->log_message('error', 'SiteMail API URL not configured');
             return [
                 'status' => 500,
-                'message' => __('URL API SiteMail non configurée', 'sitemail')
+                'message' => __('SiteMail API URL not configured', 'sitemail')
             ];
         }
 
@@ -353,11 +353,11 @@ class SiteMail_Service {
         // Handle the response
         if (is_wp_error($response)) {
             $error_message = $response->get_error_message();
-            $this->log_message('error', 'Erreur de connexion à l\'API SiteMail: ' . $error_message);
+            $this->log_message('error', 'Connection error: ' . $error_message);
             
             return [
                 'status' => 500,
-                'message' => sprintf(__('Erreur de connexion: %s', 'sitemail'), $error_message)
+                'message' => sprintf(__('Connection error: %s', 'sitemail'), $error_message)
             ];
         }
         
@@ -371,10 +371,10 @@ class SiteMail_Service {
         $decoded_body = json_decode($body, true);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->log_message('error', 'Erreur de décodage JSON: ' . json_last_error_msg() . ' - Réponse brute: ' . $body);
+            $this->log_message('error', 'Invalid API response: ' . json_last_error_msg());
             return [
                 'status' => 500,
-                'message' => sprintf(__('Réponse API invalide: %s', 'sitemail'), json_last_error_msg())
+                'message' => sprintf(__('Invalid API response: %s', 'sitemail'), json_last_error_msg())
             ];
         }
         
@@ -448,7 +448,7 @@ class SiteMail_Service {
             $this->log_message('info', 'Connexion API réussie!');
         } else {
             // Failure
-            $error_message = isset($result['message']) ? $result['message'] : __('Erreur inconnue', 'sitemail');
+            $error_message = isset($result['message']) ? $result['message'] : __('Unknown error', 'sitemail');
             $this->log_message('error', 'Échec de la connexion API: ' . $error_message);
         }
         
@@ -461,10 +461,10 @@ class SiteMail_Service {
     public function send_direct_api_request($payload) {
         // Validate API URL
         if (empty($this->api_url)) {
-            $this->log_message('error', 'URL API SiteMail non configurée');
+            $this->log_message('error', 'SiteMail API URL not configured');
             return [
                 'status' => 500,
-                'message' => __('URL API SiteMail non configurée', 'sitemail')
+                'message' => __('SiteMail API URL not configured', 'sitemail')
             ];
         }
 
@@ -491,11 +491,11 @@ class SiteMail_Service {
         // Handle the response
         if (is_wp_error($response)) {
             $error_message = $response->get_error_message();
-            $this->log_message('error', 'Erreur de connexion à l\'API SiteMail: ' . $error_message);
+            $this->log_message('error', 'Connection error: ' . $error_message);
             
             return [
                 'status' => 500,
-                'message' => sprintf(__('Erreur de connexion: %s', 'sitemail'), $error_message)
+                'message' => sprintf(__('Connection error: %s', 'sitemail'), $error_message)
             ];
         }
         
@@ -509,10 +509,10 @@ class SiteMail_Service {
         $decoded_body = json_decode($body, true);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->log_message('error', 'Erreur de décodage JSON: ' . json_last_error_msg() . ' - Réponse brute: ' . $body);
+            $this->log_message('error', 'Invalid API response: ' . json_last_error_msg());
             return [
                 'status' => 500,
-                'message' => sprintf(__('Réponse API invalide: %s', 'sitemail'), json_last_error_msg())
+                'message' => sprintf(__('Invalid API response: %s', 'sitemail'), json_last_error_msg())
             ];
         }
         

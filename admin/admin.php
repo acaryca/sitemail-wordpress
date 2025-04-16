@@ -182,7 +182,7 @@ class SiteMail_Admin {
         add_settings_error(
             'sitemail_settings',
             'sitemail_settings_updated',
-            __('Paramètres SiteMail enregistrés avec succès.', 'sitemail'),
+            __('SiteMail settings saved successfully.', 'sitemail'),
             'updated'
         );
         
@@ -196,7 +196,7 @@ class SiteMail_Admin {
      * @return array Modified links
      */
     public function add_settings_link($links) {
-        $settings_link = '<a href="options-general.php?page=sitemail-settings">' . __('Paramètres', 'sitemail') . '</a>';
+        $settings_link = '<a href="options-general.php?page=sitemail-settings">' . __('Settings', 'sitemail') . '</a>';
         array_unshift($links, $settings_link);
         return $links;
     }
@@ -207,7 +207,7 @@ class SiteMail_Admin {
     public function render_settings_page() {
         // Vérification des autorisations
         if (!current_user_can('manage_options')) {
-            wp_die(__('Désolé, vous n\'avez pas l\'autorisation d\'accéder à cette page.', 'sitemail'));
+            wp_die(__('Sorry, you do not have permission to access this page.', 'sitemail'));
         }
         
         // Récupérer l'onglet actif
@@ -239,6 +239,7 @@ class SiteMail_Admin {
                                     <option value="smtp" <?php selected(get_option('sitemail_mailer_type', 'sitemail'), 'smtp'); ?>><?php _e('SMTP', 'sitemail'); ?></option>
                                     <option value="sitemail" <?php selected(get_option('sitemail_mailer_type', 'sitemail'), 'sitemail'); ?>><?php _e('SiteMail', 'sitemail'); ?></option>
                                 </select>
+                                <p class="description"><?php _e('Choisissez le type d\'envoi d\'emails que vous souhaitez utiliser.', 'sitemail'); ?></p>
                             </td>
                         </tr>
                     </table>
@@ -246,17 +247,17 @@ class SiteMail_Admin {
                     <div id="sitemail_options" style="display: <?php echo get_option('sitemail_mailer_type', 'sitemail') === 'sitemail' ? 'block' : 'none'; ?>">
                         <table class="form-table">
                             <tr valign="top">
-                                <th scope="row"><?php _e('Clé SiteMail', 'sitemail'); ?></th>
+                                <th scope="row"><?php _e('SiteMail API Key', 'sitemail'); ?></th>
                                 <td>
                                     <input type="text" name="sitemail_api_key" value="<?php echo esc_attr(get_option('sitemail_api_key')); ?>" class="regular-text" />
-                                    <p class="description"><?php _e('Entrez votre clé API SiteMail.', 'sitemail'); ?></p>
+                                    <p class="description"><?php _e('Enter your SiteMail API key.', 'sitemail'); ?></p>
                                 </td>
                             </tr>
                             <tr valign="top">
-                                <th scope="row"><?php _e('Nom de l\'expéditeur', 'sitemail'); ?></th>
+                                <th scope="row"><?php _e('Sender Name', 'sitemail'); ?></th>
                                 <td>
                                     <input type="text" name="sitemail_sender_name" value="<?php echo esc_attr(get_option('sitemail_sender_name', get_bloginfo('name'))); ?>" class="regular-text" />
-                                    <p class="description"><?php _e('Le nom qui apparaîtra comme expéditeur de vos emails.', 'sitemail'); ?></p>
+                                    <p class="description"><?php _e('The name that will appear as the sender of your emails.', 'sitemail'); ?></p>
                                 </td>
                             </tr>
                         </table>
@@ -265,56 +266,56 @@ class SiteMail_Admin {
                     <div id="smtp_options" style="display: <?php echo get_option('sitemail_mailer_type', 'sitemail') === 'smtp' ? 'block' : 'none'; ?>">
                         <table class="form-table">
                             <tr valign="top">
-                                <th scope="row"><?php _e('Serveur SMTP', 'sitemail'); ?></th>
+                                <th scope="row"><?php _e('SMTP Host', 'sitemail'); ?></th>
                                 <td>
                                     <input type="text" name="sitemail_smtp_host" value="<?php echo esc_attr(get_option('sitemail_smtp_host')); ?>" class="regular-text" />
-                                    <p class="description"><?php _e('Adresse du serveur SMTP (ex: smtp.example.com).', 'sitemail'); ?></p>
+                                    <p class="description"><?php _e('SMTP server address (ex: smtp.example.com).', 'sitemail'); ?></p>
                                 </td>
                             </tr>
                             <tr valign="top">
-                                <th scope="row"><?php _e('Port SMTP', 'sitemail'); ?></th>
+                                <th scope="row"><?php _e('SMTP Port', 'sitemail'); ?></th>
                                 <td>
                                     <input type="text" name="sitemail_smtp_port" value="<?php echo esc_attr(get_option('sitemail_smtp_port', '587')); ?>" class="regular-text" />
-                                    <p class="description"><?php _e('Port du serveur SMTP (ex: 587 pour TLS).', 'sitemail'); ?></p>
+                                    <p class="description"><?php _e('SMTP server port (ex: 587 for TLS).', 'sitemail'); ?></p>
                                 </td>
                             </tr>
                             <tr valign="top">
-                                <th scope="row"><?php _e('Nom d\'utilisateur SMTP', 'sitemail'); ?></th>
+                                <th scope="row"><?php _e('SMTP Username', 'sitemail'); ?></th>
                                 <td>
                                     <input type="text" name="sitemail_smtp_username" value="<?php echo esc_attr(get_option('sitemail_smtp_username')); ?>" class="regular-text" />
-                                    <p class="description"><?php _e('Votre nom d\'utilisateur SMTP.', 'sitemail'); ?></p>
+                                    <p class="description"><?php _e('Your SMTP username.', 'sitemail'); ?></p>
                                 </td>
                             </tr>
                             <tr valign="top">
-                                <th scope="row"><?php _e('Mot de passe SMTP', 'sitemail'); ?></th>
+                                <th scope="row"><?php _e('SMTP Password', 'sitemail'); ?></th>
                                 <td>
                                     <input type="password" name="sitemail_smtp_password" value="<?php echo esc_attr(get_option('sitemail_smtp_password')); ?>" class="regular-text" />
-                                    <p class="description"><?php _e('Votre mot de passe SMTP.', 'sitemail'); ?></p>
+                                    <p class="description"><?php _e('Your SMTP password.', 'sitemail'); ?></p>
                                 </td>
                             </tr>
                             <tr valign="top">
-                                <th scope="row"><?php _e('Chiffrement', 'sitemail'); ?></th>
+                                <th scope="row"><?php _e('Encryption', 'sitemail'); ?></th>
                                 <td>
                                     <select name="sitemail_smtp_encryption">
                                         <option value="tls" <?php selected(get_option('sitemail_smtp_encryption', 'tls'), 'tls'); ?>>TLS</option>
                                         <option value="ssl" <?php selected(get_option('sitemail_smtp_encryption', 'tls'), 'ssl'); ?>>SSL</option>
-                                        <option value="none" <?php selected(get_option('sitemail_smtp_encryption', 'tls'), 'none'); ?>>Aucun</option>
+                                        <option value="none" <?php selected(get_option('sitemail_smtp_encryption', 'tls'), 'none'); ?>>None</option>
                                     </select>
-                                    <p class="description"><?php _e('Type de chiffrement à utiliser.', 'sitemail'); ?></p>
+                                    <p class="description"><?php _e('Type of encryption to use.', 'sitemail'); ?></p>
                                 </td>
                             </tr>
                             <tr valign="top">
-                                <th scope="row"><?php _e('Email SMTP', 'sitemail'); ?></th>
+                                <th scope="row"><?php _e('SMTP Email', 'sitemail'); ?></th>
                                 <td>
                                     <input type="email" name="sitemail_smtp_from_email" value="<?php echo esc_attr(get_option('sitemail_smtp_from_email')); ?>" class="regular-text" />
-                                    <p class="description"><?php _e('L\'adresse email qui sera utilisée pour envoyer les courriels.', 'sitemail'); ?></p>
+                                    <p class="description"><?php _e('The email address that will be used to send emails.', 'sitemail'); ?></p>
                                 </td>
                             </tr>
                             <tr valign="top">
-                                <th scope="row"><?php _e('Nom de l\'expéditeur', 'sitemail'); ?></th>
+                                <th scope="row"><?php _e('Sender Name', 'sitemail'); ?></th>
                                 <td>
                                     <input type="text" name="sitemail_sender_name" value="<?php echo esc_attr(get_option('sitemail_sender_name', get_bloginfo('name'))); ?>" class="regular-text" />
-                                    <p class="description"><?php _e('Le nom qui apparaîtra comme expéditeur de vos emails.', 'sitemail'); ?></p>
+                                    <p class="description"><?php _e('The name that will appear as the sender of your emails.', 'sitemail'); ?></p>
                                 </td>
                             </tr>
                         </table>
@@ -342,14 +343,14 @@ class SiteMail_Admin {
                 <form id="sitemail-custom-test-form" method="post">
                     <table class="form-table">
                         <tr valign="top">
-                            <th scope="row"><?php _e('Email qui recevra le test', 'sitemail'); ?></th>
+                            <th scope="row"><?php _e('Email to receive the test', 'sitemail'); ?></th>
                             <td>
                                 <input type="email" id="sitemail-test-email" name="sitemail_test_email" value="<?php echo esc_attr(get_option('admin_email')); ?>" class="regular-text" required />
                             </td>
                         </tr>
                     </table>
                     <p class="submit">
-                        <button type="submit" class="button button-primary" id="sitemail-send-test"><?php _e('Envoyer l\'email de test', 'sitemail'); ?></button>
+                        <button type="submit" class="button button-primary" id="sitemail-send-test"><?php _e('Send test email', 'sitemail'); ?></button>
                         <span class="spinner" id="sitemail-test-spinner" style="float: none; margin-top: 0;"></span>
                     </p>
                 </form>
@@ -368,14 +369,14 @@ class SiteMail_Admin {
                             $.post(ajaxurl, {
                                 action: 'sitemail_send_test_email',
                                 email: email,
-                                subject: "Test email via SiteMail",
+                                subject: "<?php echo esc_js(__('Test email via SiteMail', 'sitemail')); ?>",
                                 nonce: '<?php echo wp_create_nonce('sitemail_test_nonce'); ?>'
                             }, function(response) {
                                 $('#sitemail-test-result').html(response).show();
                                 $('#sitemail-send-test').prop('disabled', false);
                                 $('#sitemail-test-spinner').removeClass('is-active');
                             }).fail(function() {
-                                $('#sitemail-test-result').html('<div class="notice notice-error inline"><p><?php echo esc_js(__('Une erreur s\'est produite lors de l\'envoi de l\'email de test.', 'sitemail')); ?></p></div>').show();
+                                $('#sitemail-test-result').html('<div class="notice notice-error inline"><p><?php echo esc_js(__('An error occurred while sending the test email.', 'sitemail')); ?></p></div>').show();
                                 $('#sitemail-send-test').prop('disabled', false);
                                 $('#sitemail-test-spinner').removeClass('is-active');
                             });
@@ -418,13 +419,13 @@ class SiteMail_Admin {
     public function ajax_test_email() {
         // Verify nonce
         if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'sitemail_test_nonce')) {
-            wp_send_json_error(__('Sécurité: Nonce invalide.', 'sitemail'));
+            wp_send_json_error(__('Security: Invalid nonce.', 'sitemail'));
             wp_die();
         }
         
         // Verify permissions
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Vous n\'avez pas les permissions suffisantes.', 'sitemail'));
+            wp_send_json_error(__('You do not have sufficient permissions.', 'sitemail'));
             wp_die();
         }
         
@@ -432,7 +433,7 @@ class SiteMail_Admin {
         $subject = isset($_POST['subject']) ? sanitize_text_field($_POST['subject']) : __('Test email via SiteMail', 'sitemail');
         
         if (empty($email)) {
-            echo '<div class="notice notice-error inline"><p>' . __('Veuillez saisir une adresse email valide.', 'sitemail') . '</p></div>';
+            echo '<div class="notice notice-error inline"><p>' . __('Please enter a valid email address.', 'sitemail') . '</p></div>';
             wp_die();
         }
         
@@ -441,11 +442,11 @@ class SiteMail_Admin {
         // Check if API key is configured
         $api_key = $sitemail_service->get_api_key();
         if (empty($api_key)) {
-            echo '<div class="notice notice-error inline"><p>' . __('Erreur: Clé API SiteMail non configurée. Veuillez d\'abord configurer votre clé API.', 'sitemail') . '</p></div>';
+            echo '<div class="notice notice-error inline"><p>' . __('Error: SiteMail API key not configured. Please configure your API key first.', 'sitemail') . '</p></div>';
             wp_die();
         }
         
-        $message = __('Ceci est un email de test envoyé via SiteMail. Si vous recevez cet email, la configuration fonctionne correctement. Veuillez vérifier l\'adresse de l\'expéditeur pour vous assurer qu\'elle correspond à votre configuration attendue.', 'sitemail');
+        $message = __('This is a test email sent via SiteMail. If you receive this email, the configuration is working correctly. Please verify the sender address to ensure it matches your expected configuration.', 'sitemail');
         $headers = ['Content-Type: text/html; charset=UTF-8'];
         
         add_action('wp_mail_failed', function($wp_error) {
@@ -458,9 +459,9 @@ class SiteMail_Admin {
         $result = wp_mail($email, $subject, $message, $headers);
         
         if ($result) {
-            echo '<div class="notice notice-success inline"><p>' . sprintf(__('Email de test envoyé avec succès à %s !', 'sitemail'), esc_html($email)) . '</p></div>';
+            echo '<div class="notice notice-success inline"><p>' . sprintf(__('Test email sent successfully to %s!', 'sitemail'), esc_html($email)) . '</p></div>';
         } else {
-            echo '<div class="notice notice-error inline"><p>' . __('Échec de l\'envoi de l\'email de test. Vérifiez la configuration et les journaux pour plus de détails.', 'sitemail') . '</p></div>';
+            echo '<div class="notice notice-error inline"><p>' . __('Failed to send test email. Check configuration and logs for details.', 'sitemail') . '</p></div>';
         }
         
         wp_die();
@@ -511,7 +512,7 @@ class SiteMail_Admin {
             add_settings_error(
                 'sitemail_settings',
                 'sitemail_api_key_missing',
-                __('Erreur: Clé API SiteMail non configurée. Veuillez d\'abord configurer votre clé API.', 'sitemail'),
+                __('Error: SiteMail API key not configured. Please configure your API key first.', 'sitemail'),
                 'error'
             );
             
@@ -547,7 +548,7 @@ class SiteMail_Admin {
                 'sitemail_settings',
                 'sitemail_test_error',
                 sprintf(
-                    __('Échec de l\'envoi du courriel de test: %s', 'sitemail'),
+                    __('Failed to send test email: %s', 'sitemail'),
                     $mail_error
                 ),
                 'error'
@@ -557,7 +558,7 @@ class SiteMail_Admin {
             add_settings_error(
                 'sitemail_settings',
                 'sitemail_test_error',
-                __('Échec de l\'envoi du courriel de test. Vérifiez la configuration et les journaux pour plus de détails.', 'sitemail'),
+                __('Failed to send test email. Check configuration and logs for details.', 'sitemail'),
                 'error'
             );
         } else {
@@ -566,7 +567,7 @@ class SiteMail_Admin {
                 'sitemail_settings',
                 'sitemail_test_success',
                 sprintf(
-                    __('Courriel de test envoyé avec succès à %s! Veuillez vérifier votre boîte de réception.', 'sitemail'),
+                    __('Test email sent successfully to %s! Please check your inbox.', 'sitemail'),
                     esc_html($to)
                 ),
                 'updated'
@@ -613,7 +614,7 @@ class SiteMail_Admin {
             add_settings_error(
                 'sitemail_settings',
                 'sitemail_api_key_missing',
-                __('Erreur: Clé API SiteMail non configurée. Veuillez d\'abord configurer votre clé API.', 'sitemail'),
+                __('Error: SiteMail API key not configured. Please configure your API key first.', 'sitemail'),
                 'error'
             );
             
@@ -634,7 +635,7 @@ class SiteMail_Admin {
                 'sitemail_settings',
                 'sitemail_api_test_success',
                 sprintf(
-                    __('Connexion API réussie! URL: %s - Réponse: %s', 'sitemail'),
+                    __('API connection successful! URL: %s - Response: %s', 'sitemail'),
                     esc_html($sitemail_service->get_api_url()),
                     isset($result['message']) ? esc_html($result['message']) : __('OK', 'sitemail')
                 ),
@@ -642,7 +643,7 @@ class SiteMail_Admin {
             );
         } else {
             // Failure
-            $error_message = isset($result['message']) ? $result['message'] : __('Erreur inconnue', 'sitemail');
+            $error_message = isset($result['message']) ? $result['message'] : __('Unknown error', 'sitemail');
             $error_details = '';
             
             // Add response code if available
@@ -654,18 +655,18 @@ class SiteMail_Admin {
             if (!empty($result['data']) && is_array($result['data'])) {
                 $error_data = json_encode($result['data'], JSON_PRETTY_PRINT);
                 if ($error_data) {
-                    $error_details .= '<br>' . sprintf(__('Détails: %s', 'sitemail'), '<pre>' . esc_html($error_data) . '</pre>');
+                    $error_details .= '<br>' . sprintf(__('Details: %s', 'sitemail'), '<pre>' . esc_html($error_data) . '</pre>');
                 }
             }
             
             // Add API URL to error message
-            $api_url_info = sprintf(__('URL API: %s', 'sitemail'), esc_html($sitemail_service->get_api_url()));
+            $api_url_info = sprintf(__('API URL: %s', 'sitemail'), esc_html($sitemail_service->get_api_url()));
             
             add_settings_error(
                 'sitemail_settings',
                 'sitemail_api_test_error',
                 sprintf(
-                    __('Échec de la connexion API: %s<br>%s<br>%s', 'sitemail'),
+                    __('API connection failed: %s<br>%s<br>%s', 'sitemail'),
                     esc_html($error_message),
                     $api_url_info,
                     $error_details
@@ -699,7 +700,7 @@ class SiteMail_Admin {
             add_settings_error(
                 'sitemail_settings',
                 'sitemail_api_key_missing',
-                __('Erreur: Clé API SiteMail non configurée. Veuillez d\'abord configurer votre clé API.', 'sitemail'),
+                __('Error: SiteMail API key not configured. Please configure your API key first.', 'sitemail'),
                 'error'
             );
             
@@ -714,7 +715,7 @@ class SiteMail_Admin {
         // Envoyer un email directement via l'API
         $to = get_option('admin_email');
         $subject = __('Test direct API SiteMail', 'sitemail');
-        $message = __('Ceci est un test direct de l\'API SiteMail. Si vous recevez cet email, la configuration fonctionne correctement.', 'sitemail');
+        $message = __('This is a direct test of the SiteMail API. If you receive this email, the configuration is working correctly.', 'sitemail');
         
         // Préparer les données pour l'API
         $payload = [
@@ -737,7 +738,7 @@ class SiteMail_Admin {
                 'sitemail_settings',
                 'sitemail_direct_api_success',
                 sprintf(
-                    __('Email envoyé avec succès via API directe à %s! URL: %s', 'sitemail'),
+                    __('Email sent successfully via direct API to %s! URL: %s', 'sitemail'),
                     esc_html($to),
                     esc_html($sitemail_service->get_api_url())
                 ),
@@ -745,7 +746,7 @@ class SiteMail_Admin {
             );
         } else {
             // Failure
-            $error_message = isset($result['message']) ? $result['message'] : __('Erreur inconnue', 'sitemail');
+            $error_message = isset($result['message']) ? $result['message'] : __('Unknown error', 'sitemail');
             $error_details = '';
             
             // Add response code if available
@@ -757,18 +758,18 @@ class SiteMail_Admin {
             if (!empty($result['data']) && is_array($result['data'])) {
                 $error_data = json_encode($result['data'], JSON_PRETTY_PRINT);
                 if ($error_data) {
-                    $error_details .= '<br>' . sprintf(__('Détails: %s', 'sitemail'), '<pre>' . esc_html($error_data) . '</pre>');
+                    $error_details .= '<br>' . sprintf(__('Details: %s', 'sitemail'), '<pre>' . esc_html($error_data) . '</pre>');
                 }
             }
             
             // Add API URL to error message
-            $api_url_info = sprintf(__('URL API: %s', 'sitemail'), esc_html($sitemail_service->get_api_url()));
+            $api_url_info = sprintf(__('API URL: %s', 'sitemail'), esc_html($sitemail_service->get_api_url()));
             
             add_settings_error(
                 'sitemail_settings',
                 'sitemail_direct_api_error',
                 sprintf(
-                    __('Échec de l\'envoi direct via API: %s<br>%s<br>%s', 'sitemail'),
+                    __('Direct API send failed: %s<br>%s<br>%s', 'sitemail'),
                     esc_html($error_message),
                     $api_url_info,
                     $error_details
