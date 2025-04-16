@@ -32,36 +32,6 @@ class SiteMail_Admin {
         
         // Setup test routes
         $this->setup_test_routes();
-        
-        // Ajouter un hook de débogage pour vérifier que le menu est bien ajouté
-        add_action('admin_notices', [$this, 'debug_admin_menu']);
-    }
-    
-    /**
-     * Function de débogage pour vérifier l'état du menu admin
-     */
-    public function debug_admin_menu() {
-        global $submenu;
-        
-        // Uniquement pour les administrateurs et si le débogage est activé
-        if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
-            // Vérifier si notre page d'options existe dans le menu
-            $settings_menu_found = false;
-            if (isset($submenu['options-general.php'])) {
-                foreach ($submenu['options-general.php'] as $item) {
-                    if (isset($item[2]) && $item[2] === 'sitemail-settings') {
-                        $settings_menu_found = true;
-                        break;
-                    }
-                }
-            }
-            
-            if (!$settings_menu_found && isset($_GET['page']) && $_GET['page'] === 'sitemail-settings') {
-                echo '<div class="notice notice-warning"><p>';
-                _e('Avertissement de débogage: Le menu de paramètres SiteMail n\'a pas été trouvé dans le menu d\'administration.', 'sitemail');
-                echo '</p></div>';
-            }
-        }
     }
     
     /**
@@ -178,13 +148,16 @@ class SiteMail_Admin {
         // Sanitize the API key
         $api_key = sanitize_text_field($input);
         
-        // Add a success message
-        add_settings_error(
-            'sitemail_settings',
-            'sitemail_settings_updated',
-            __('SiteMail settings saved successfully.', 'sitemail'),
-            'updated'
-        );
+        // Add a success message only if it hasn't been added yet
+        if (!get_transient('sitemail_settings_saved')) {
+            add_settings_error(
+                'sitemail_settings',
+                'sitemail_settings_updated',
+                __('SiteMail settings saved successfully.', 'sitemail'),
+                'updated'
+            );
+            set_transient('sitemail_settings_saved', true, 30);
+        }
         
         return $api_key;
     }
@@ -343,9 +316,10 @@ class SiteMail_Admin {
                 <form id="sitemail-custom-test-form" method="post">
                     <table class="form-table">
                         <tr valign="top">
-                            <th scope="row"><?php _e('Email to receive the test', 'sitemail'); ?></th>
+                            <th scope="row"><?php _e('Email', 'sitemail'); ?></th>
                             <td>
                                 <input type="email" id="sitemail-test-email" name="sitemail_test_email" value="<?php echo esc_attr(get_option('admin_email')); ?>" class="regular-text" required />
+                                <p class="description"><?php _e('Enter the email address you want to receive the test email.', 'sitemail'); ?></p>
                             </td>
                         </tr>
                     </table>
