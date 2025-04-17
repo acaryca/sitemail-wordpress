@@ -249,7 +249,7 @@ class SiteMail_Admin {
                                 <th scope="row"><?php _e('SMTP Port', 'sitemail'); ?></th>
                                 <td>
                                     <input type="text" name="sitemail_smtp_port" value="<?php echo esc_attr(get_option('sitemail_smtp_port', '587')); ?>" class="regular-text" />
-                                    <p class="description"><?php _e('SMTP server port (ex: 587 for TLS).', 'sitemail'); ?></p>
+                                    <p class="description"><?php _e('SMTP server port (ex: 587 for TLS, 465 for SSL).', 'sitemail'); ?></p>
                                 </td>
                             </tr>
                             <tr valign="top">
