@@ -215,6 +215,13 @@ class SiteMail_Admin {
                                 <p class="description"><?php _e('Choose the type of email sending you want to use.', 'sitemail'); ?></p>
                             </td>
                         </tr>
+                        <tr valign="top">
+                            <th scope="row"><?php _e('Sender Name', 'sitemail'); ?></th>
+                            <td>
+                                <input type="text" name="sitemail_sender_name" value="<?php echo esc_attr(get_option('sitemail_sender_name', get_bloginfo('name'))); ?>" class="regular-text" />
+                                <p class="description"><?php _e('The name that will appear as the sender of your emails.', 'sitemail'); ?></p>
+                            </td>
+                        </tr>
                     </table>
 
                     <div id="sitemail_options" style="display: <?php echo get_option('sitemail_mailer_type', 'sitemail') === 'sitemail' ? 'block' : 'none'; ?>">
@@ -224,13 +231,6 @@ class SiteMail_Admin {
                                 <td>
                                     <input type="text" name="sitemail_api_key" value="<?php echo esc_attr(get_option('sitemail_api_key')); ?>" class="regular-text" />
                                     <p class="description"><?php _e('Enter your SiteMail API key.', 'sitemail'); ?></p>
-                                </td>
-                            </tr>
-                            <tr valign="top">
-                                <th scope="row"><?php _e('Sender Name', 'sitemail'); ?></th>
-                                <td>
-                                    <input type="text" name="sitemail_sender_name" value="<?php echo esc_attr(get_option('sitemail_sender_name', get_bloginfo('name'))); ?>" class="regular-text" />
-                                    <p class="description"><?php _e('The name that will appear as the sender of your emails.', 'sitemail'); ?></p>
                                 </td>
                             </tr>
                         </table>
@@ -282,13 +282,6 @@ class SiteMail_Admin {
                                 <td>
                                     <input type="email" name="sitemail_smtp_from_email" value="<?php echo esc_attr(get_option('sitemail_smtp_from_email')); ?>" class="regular-text" />
                                     <p class="description"><?php _e('The email address that will be used to send emails.', 'sitemail'); ?></p>
-                                </td>
-                            </tr>
-                            <tr valign="top">
-                                <th scope="row"><?php _e('Sender Name', 'sitemail'); ?></th>
-                                <td>
-                                    <input type="text" name="sitemail_sender_name" value="<?php echo esc_attr(get_option('sitemail_sender_name', get_bloginfo('name'))); ?>" class="regular-text" />
-                                    <p class="description"><?php _e('The name that will appear as the sender of your emails.', 'sitemail'); ?></p>
                                 </td>
                             </tr>
                         </table>
