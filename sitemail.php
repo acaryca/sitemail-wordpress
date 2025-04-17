@@ -277,8 +277,19 @@ class SiteMail_Service {
         
         // Add reply-to if present
         if (!empty($reply_to)) {
-            $payload['email']['replyTo'] = $reply_to;
+            $this->log_message('debug', 'Reply-to avant traitement: ' . $reply_to);
+            
+            // Parse the reply-to to extract the email address
+            if (preg_match('/(.*)<(.*)>/', $reply_to, $matches)) {
+                $payload['email']['replyTo'] = trim($matches[2]); // Just use the email part
+                $this->log_message('debug', 'Reply-to extrait: ' . $payload['email']['replyTo']);
+            } else {
+                $payload['email']['replyTo'] = $reply_to;
+                $this->log_message('debug', 'Reply-to utilisé tel quel: ' . $payload['email']['replyTo']);
+            }
         }
+
+        $this->log_message('debug', 'Payload complet: ' . json_encode($payload));
         
         $this->log_message('info', 'Envoi d\'email via SiteMail API: ' . json_encode([
             'to' => implode(', ', $to),
