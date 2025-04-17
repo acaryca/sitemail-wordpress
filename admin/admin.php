@@ -191,10 +191,10 @@ class SiteMail_Admin {
             
             <h2 class="nav-tab-wrapper">
                 <a href="?page=sitemail-settings&tab=options" class="nav-tab <?php echo $active_tab === 'options' ? 'nav-tab-active' : ''; ?>">
-                    <?php _e('Options', 'sitemail'); ?>
+                    <?php _e('Settings', 'sitemail'); ?>
                 </a>
                 <a href="?page=sitemail-settings&tab=test" class="nav-tab <?php echo $active_tab === 'test' ? 'nav-tab-active' : ''; ?>">
-                    <?php _e('Test', 'sitemail'); ?>
+                    <?php _e('Testing', 'sitemail'); ?>
                 </a>
             </h2>
             
