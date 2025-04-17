@@ -2,7 +2,7 @@
 /**
  * Plugin Name: SiteMail
  * Description: Replace WordPress email function with SiteMail API or SMTP
- * Version: 1.0.11
+ * Version: 1.0.0
  * Author: ACARY
  * Author URI: https://acary.ca
  * Text Domain: sitemail
