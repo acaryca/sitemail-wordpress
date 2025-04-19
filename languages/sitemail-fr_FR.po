@@ -1,0 +1,343 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: SiteMail\n"
+"POT-Creation-Date: 2025-04-19 16:36-0400\n"
+"PO-Revision-Date: 2025-04-19 16:36-0400\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: fr_CA\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.5\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-Flags-xgettext: --add-comments=translators:\n"
+"X-Poedit-WPHeader: sitemail.php\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: __;_e;_n:1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;esc_attr__;"
+"esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c;_n_noop:1,2;"
+"_nx_noop:3c,1,2;__ngettext_noop:1,2\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: *.min.js\n"
+"X-Poedit-SearchPathExcluded-1: includes\n"
+
+#: admin/admin.php:42 admin/admin.php:43
+msgid "Email settings"
+msgstr "Paramètres d'envoi"
+
+#: admin/admin.php:156
+msgid "SiteMail settings saved successfully."
+msgstr "Les paramètres de SiteMail ont été sauvegardés avec succès."
+
+#: admin/admin.php:172 admin/admin.php:194
+msgid "Settings"
+msgstr "Paramètres"
+
+#: admin/admin.php:183
+msgid "Sorry, you do not have permission to access this page."
+msgstr "Désolé, vous n'avez pas l'autorisation d'accéder à cette page."
+
+#: admin/admin.php:197
+msgid "Testing"
+msgstr "Test"
+
+#: admin/admin.php:209
+msgid "Type"
+msgstr "Type"
+
+#: admin/admin.php:212
+msgid "SMTP"
+msgstr "SMTP"
+
+#. Plugin Name of the plugin/theme
+#: admin/admin.php:213
+msgid "SiteMail"
+msgstr "SiteMail"
+
+#: admin/admin.php:215
+msgid "Choose the type of email sending you want to use."
+msgstr "Choisissez le type d'envoi que vous souhaitez utiliser."
+
+#: admin/admin.php:219
+msgid "Sender Name"
+msgstr "Nom de l'expéditeur"
+
+#: admin/admin.php:222
+msgid "The name that will appear as the sender of your emails."
+msgstr "Le nom qui apparaîtra en tant qu'expéditeur de vos courriels."
+
+#: admin/admin.php:230
+msgid "SiteMail API Key"
+msgstr "Clé API SiteMail"
+
+#: admin/admin.php:233
+msgid "Enter your SiteMail API key."
+msgstr "Entrez votre clé API SiteMail."
+
+#: admin/admin.php:242
+msgid "SMTP Host"
+msgstr "Hôte SMTP"
+
+#: admin/admin.php:245
+msgid "SMTP server address (ex: smtp.example.com)."
+msgstr "Adresse du serveur SMTP (ex : smtp.example.com)."
+
+#: admin/admin.php:249
+msgid "SMTP Port"
+msgstr "Port SMTP"
+
+#: admin/admin.php:252
+msgid "SMTP server port (ex: 587 for TLS, 465 for SSL)."
+msgstr "Port du serveur SMTP (ex : 587 pour TLS, 465 pour SSL)."
+
+#: admin/admin.php:256
+msgid "SMTP Username"
+msgstr "Nom d'utilisateur SMTP"
+
+#: admin/admin.php:259
+msgid "Your SMTP username."
+msgstr "Votre nom d'utilisateur SMTP."
+
+#: admin/admin.php:263
+msgid "SMTP Password"
+msgstr "Mot de passe SMTP"
+
+#: admin/admin.php:266
+msgid "Your SMTP password."
+msgstr "Votre mot de passe SMTP."
+
+#: admin/admin.php:270
+msgid "Encryption"
+msgstr "Chiffrement"
+
+#: admin/admin.php:277
+msgid "Type of encryption to use."
+msgstr "Type de chiffrement à utiliser."
+
+#: admin/admin.php:281
+msgid "SMTP Email"
+msgstr "Adresse courriel SMTP"
+
+#: admin/admin.php:284
+msgid "The email address that will be used to send emails."
+msgstr "L'adresse courriel qui sera utilisée pour envoyer des courriels."
+
+#: admin/admin.php:312
+msgid "Email"
+msgstr "Courriel"
+
+#: admin/admin.php:315
+msgid "Enter the email address you want to receive the test email."
+msgstr ""
+"Saisissez l'adresse courriel à laquelle vous souhaitez recevoir le courriel "
+"de test."
+
+#: admin/admin.php:320
+msgid "Send test email"
+msgstr "Envoyer un courriel de test"
+
+#: admin/admin.php:339 admin/admin.php:400 admin/admin.php:499
+msgid "Test email via SiteMail"
+msgstr "Test du courrier électronique via SiteMail"
+
+#: admin/admin.php:346
+msgid "An error occurred while sending the test email."
+msgstr "Une erreur s'est produite lors de l'envoi du courriel de test."
+
+#: admin/admin.php:389
+msgid "Security: Invalid nonce."
+msgstr "Sécurité : Nonce non valide."
+
+#: admin/admin.php:395
+msgid "You do not have sufficient permissions."
+msgstr "Vous n'avez pas les autorisations suffisantes."
+
+#: admin/admin.php:403
+msgid "Please enter a valid email address."
+msgstr "Veuillez saisir une adresse électronique valide."
+
+#: admin/admin.php:412 admin/admin.php:482 admin/admin.php:584
+#: admin/admin.php:670
+msgid ""
+"Error: SiteMail API key not configured. Please configure your API key first."
+msgstr ""
+"Erreur : La clé API SiteMail n'est pas configurée. Veuillez d'abord "
+"configurer votre clé API."
+
+#: admin/admin.php:416
+msgid ""
+"This is a test email sent via SiteMail. If you receive this email, the "
+"configuration is working correctly. Please verify the sender address to "
+"ensure it matches your expected configuration."
+msgstr ""
+"Il s'agit d'un e-mail de test envoyé via SiteMail. Si vous recevez cet e-"
+"mail, la configuration fonctionne correctement. Veuillez vérifier l'adresse "
+"de l'expéditeur pour vous assurer qu'elle correspond à la configuration "
+"attendue."
+
+#: admin/admin.php:429
+#, php-format
+msgid "Test email sent successfully to %s!"
+msgstr "L'e-mail de test a été envoyé avec succès à %s !"
+
+#: admin/admin.php:431 admin/admin.php:528
+msgid "Failed to send test email. Check configuration and logs for details."
+msgstr ""
+"Échec de l'envoi de l'e-mail de test. Vérifiez la configuration et les "
+"journaux pour plus de détails."
+
+#: admin/admin.php:471 admin/admin.php:573 admin/admin.php:659
+msgid "You do not have sufficient permissions to access this page."
+msgstr ""
+"Vous ne disposez pas des autorisations suffisantes pour accéder à cette page."
+
+#: admin/admin.php:500
+msgid ""
+"This is a test email sent via SiteMail. If you receive this email, the "
+"configuration is working correctly. Please verify the sender email address "
+"to ensure it matches your expected configuration."
+msgstr ""
+"Il s'agit d'un e-mail de test envoyé via SiteMail. Si vous recevez cet e-"
+"mail, la configuration fonctionne correctement. Veuillez vérifier l'adresse "
+"e-mail de l'expéditeur pour vous assurer qu'elle correspond à la "
+"configuration attendue."
+
+#: admin/admin.php:518
+#, php-format
+msgid "Failed to send test email: %s"
+msgstr "Échec de l'envoi de l'email de test : %s"
+
+#: admin/admin.php:537
+#, php-format
+msgid "Test email sent successfully to %s! Please check your inbox."
+msgstr ""
+"L'e-mail de test a été envoyé avec succès à %s ! Veuillez vérifier votre "
+"boîte de réception."
+
+#: admin/admin.php:605
+#, php-format
+msgid "API connection successful! URL: %s - Response: %s"
+msgstr "Connexion API réussie ! URL : %s - Response : %s"
+
+#: admin/admin.php:607
+msgid "OK"
+msgstr "OK"
+
+#: admin/admin.php:613 admin/admin.php:716 sitemail.php:314 sitemail.php:466
+msgid "Unknown error"
+msgstr "Erreur inconnue"
+
+#: admin/admin.php:618 admin/admin.php:721
+#, php-format
+msgid "Code: %s"
+msgstr "Code: %s"
+
+#: admin/admin.php:625 admin/admin.php:728
+#, php-format
+msgid "Details: %s"
+msgstr "Details: %s"
+
+#: admin/admin.php:630 admin/admin.php:733
+#, php-format
+msgid "API URL: %s"
+msgstr "API URL: %s"
+
+#: admin/admin.php:636
+#, php-format
+msgid "API connection failed: %s<br>%s<br>%s"
+msgstr "Échec de la connexion à l'API : %s<br>%s<br>%s"
+
+#: admin/admin.php:684
+msgid "Test direct API SiteMail"
+msgstr "Test direct de l'API SiteMail"
+
+#: admin/admin.php:685
+msgid ""
+"This is a direct test of the SiteMail API. If you receive this email, the "
+"configuration is working correctly."
+msgstr ""
+"Il s'agit d'un test direct de l'API SiteMail. Si vous recevez cet e-mail, la "
+"configuration fonctionne correctement."
+
+#: admin/admin.php:708
+#, php-format
+msgid "Email sent successfully via direct API to %s! URL: %s"
+msgstr "Courriel envoyé avec succès via l'API directe à %s ! URL : %s"
+
+#: admin/admin.php:739
+#, php-format
+msgid "Direct API send failed: %s<br>%s<br>%s"
+msgstr "L'envoi direct de l'API a échoué : %s<br>%s<br>%s"
+
+#: sitemail.php:116
+#, php-format
+msgid ""
+"SiteMail: Please <a href=\"%s\">configure your SiteMail API key</a> to "
+"enable email sending features or change the email sending method to SMTP."
+msgstr ""
+"SiteMail: Veuillez configurer votre <a href=\"%s\">clé API SiteMail</a> pour "
+"activer les fonctions d'envoi d'e-mails ou changer la méthode d'envoi d'e-"
+"mails en SMTP."
+
+#: sitemail.php:247
+msgid "No valid recipient"
+msgstr "Pas de destinataire valide"
+
+#: sitemail.php:344 sitemail.php:482
+msgid "SiteMail API URL not configured"
+msgstr "L'URL SiteMail API n'est pas configurée"
+
+#: sitemail.php:375 sitemail.php:513
+#, php-format
+msgid "Connection error: %s"
+msgstr "Erreur de connexion : %s"
+
+#: sitemail.php:392 sitemail.php:530
+#, php-format
+msgid "Invalid API response: %s"
+msgstr "Réponse API non valide : %s"
+
+#. Description of the plugin/theme
+msgid "Replace WordPress email function with SiteMail or SMTP"
+msgstr "Remplacer la fonction email de WordPress par SiteMail ou SMTP"
+
+#. Author of the plugin/theme
+msgid "ACARY"
+msgstr "ACARY"
+
+#. Author URI of the plugin/theme
+msgid "https://acary.ca"
+msgstr "https://acary.ca"
+
+#~ msgid "View details"
+#~ msgstr "Voir les détails"
+
+#, php-format
+#~ msgid "More information about %s"
+#~ msgstr "Plus d'informations sur %s"
+
+#~ msgid "Check for updates"
+#~ msgstr "Vérifier les mises à jour"
+
+#, php-format
+#~ msgctxt "the plugin title"
+#~ msgid "The %s plugin is up to date."
+#~ msgstr "Le plugin %s est à jour."
+
+#, php-format
+#~ msgctxt "the plugin title"
+#~ msgid "A new version of the %s plugin is available."
+#~ msgstr "Une nouvelle version du plugin %s est disponible."
+
+#, php-format
+#~ msgctxt "the plugin title"
+#~ msgid "Could not determine if updates are available for %s."
+#~ msgstr ""
+#~ "Impossible de déterminer si des mises à jour sont disponibles pour %s."
+
+#, php-format
+#~ msgid "Unknown update checker status \"%s\""
+#~ msgstr "Statut inconnu du vérificateur de mise à jour « %s »"
+
+#~ msgid "There is no changelog available."
+#~ msgstr "Il n'y a pas de changelog disponible."

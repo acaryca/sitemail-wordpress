@@ -1,13 +1,14 @@
 <?php
 /**
  * Plugin Name: SiteMail
- * Description: Replace WordPress email function with SiteMail API or SMTP
+ * Description: Replace WordPress email function with SiteMail or SMTP
  * Version: 1.0.0
  * Author: ACARY
  * Author URI: https://acary.ca
  * Text Domain: sitemail
  * License: GPL-3.0+
  * License URI: http://www.gnu.org/licenses/gpl-3.0.txt
+ * Domain Path: /languages
  */
 
 // Prevent direct access
@@ -16,6 +17,11 @@ if (!defined('ABSPATH')) {
 }
 
 define('SITEMAIL_PLUGIN_FILE', __FILE__);
+
+// Translations
+add_action( 'plugins_loaded', function () {
+    load_plugin_textdomain('sitemail', false, dirname(plugin_basename(__FILE__)) . '/languages/');
+});
 
 // Include Updater if not already included
 require_once plugin_dir_path(__FILE__) . '/includes/plugin-update-checker.php';
