@@ -2,6 +2,8 @@
 
 Replace WordPress email function with SiteMail API or SMTP
 
+![Banner](/assets/banner-1544x500.jpg)
+
 ## Installation
 
 1. Download the plugin from the GitHub release page.
