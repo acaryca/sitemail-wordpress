@@ -283,15 +283,21 @@ class SiteMail_Service {
         
         // Add reply-to if present
         if (!empty($reply_to)) {
-            $this->log_message('debug', 'Reply-to avant traitement: ' . $reply_to);
+            $this->log_message('debug', 'Reply-to before processing: ' . $reply_to);
             
-            // Parse the reply-to to extract the email address
-            if (preg_match('/(.*)<(.*)>/', $reply_to, $matches)) {
-                $payload['email']['replyTo'] = trim($matches[2]); // Just use the email part
-                $this->log_message('debug', 'Reply-to extrait: ' . $payload['email']['replyTo']);
+            // Ignore the WordPress automatic reply-to
+            $site_domain = parse_url(site_url(), PHP_URL_HOST);
+            if (strpos($reply_to, 'wordpress@' . $site_domain) === 0) {
+                $this->log_message('debug', 'Reply-to WordPress ignored: ' . $reply_to);
             } else {
-                $payload['email']['replyTo'] = $reply_to;
-                $this->log_message('debug', 'Reply-to utilisé tel quel: ' . $payload['email']['replyTo']);
+                // Parse the reply-to to extract the email address
+                if (preg_match('/(.*)<(.*)>/', $reply_to, $matches)) {
+                    $payload['email']['replyTo'] = trim($matches[2]); // Just use the email part
+                    $this->log_message('debug', 'Reply-to extracted: ' . $payload['email']['replyTo']);
+                } else {
+                    $payload['email']['replyTo'] = $reply_to;
+                    $this->log_message('debug', 'Reply-to used as is: ' . $payload['email']['replyTo']);
+                }
             }
         }
 

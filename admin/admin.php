@@ -39,8 +39,8 @@ class SiteMail_Admin {
      */
     public function add_admin_menu() {
         add_options_page(
-            __('Email settings', 'sitemail'),
-            __('Email settings', 'sitemail'), 
+            __('Sitemail', 'sitemail'),
+            __('Sitemail', 'sitemail'), 
             'manage_options', 
             'sitemail-settings', 
             [$this, 'render_settings_page']
